@@ -43,6 +43,22 @@ meson setup build --prefix=/usr/local
 ninja -C build install
 ```
 
+### Flatpak
+
+The manifest uses the GNOME 51 runtime and builds VTE as an extra module,
+because the GNOME runtime doesn't include it:
+
+```sh
+flatpak install flathub org.gnome.Sdk//51 org.gnome.Platform//51
+flatpak-builder --user --install --force-clean _flatpak io.github.agustingv.sxpilot.yml
+flatpak run io.github.agustingv.sxpilot
+```
+
+The sandbox has network access, the host SSH agent socket and `~/.ssh`
+(for keys, `config` and `known_hosts`). Inside the Flatpak, connections are
+stored in `~/.var/app/io.github.agustingv.sxpilot/config/sxpilot/` instead of
+`~/.config/sxpilot/`.
+
 Run the validation tests (desktop file, metainfo, GSettings schema) with
 `meson test -C build`.
 

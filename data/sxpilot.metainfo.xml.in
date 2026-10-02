@@ -17,7 +17,7 @@
       <li>Passwords stored securely in the system keyring</li>
     </ul>
   </description>
-  <developer id="es.agustingarcia">
+  <developer id="io.github.agustingv">
     <name>Agustín García</name>
   </developer>
   <launchable type="desktop-id">@APP_ID@.desktop</launchable>

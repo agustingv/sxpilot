@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="sxpilot">
-  <schema id="es.agustingarcia.SxPilot" path="/es/agustingarcia/SxPilot/">
+  <schema id="io.github.agustingv.sxpilot" path="/io/github/agustingv/sxpilot/">
     <key name="window-width" type="i">
       <default>1100</default>
       <summary>Window width</summary>

@@ -7,7 +7,7 @@ project('sxpilot', ['c', 'vala'],
 i18n = import('i18n')
 gnome = import('gnome')
 
-app_id = 'es.agustingarcia.SxPilot'
+app_id = 'io.github.agustingv.sxpilot'
 
 # Vala-generated C is noisy; keep the build output readable.
 add_project_arguments('-w', language: 'c')
