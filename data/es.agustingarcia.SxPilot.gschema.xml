@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="sxpilot">
+  <schema id="es.agustingarcia.SxPilot" path="/es/agustingarcia/SxPilot/">
+    <key name="window-width" type="i">
+      <default>1100</default>
+      <summary>Window width</summary>
+    </key>
+    <key name="window-height" type="i">
+      <default>700</default>
+      <summary>Window height</summary>
+    </key>
+    <key name="window-maximized" type="b">
+      <default>false</default>
+      <summary>Window maximized state</summary>
+    </key>
+    <key name="terminal-font" type="s">
+      <default>'Monospace 11'</default>
+      <summary>Terminal font</summary>
+    </key>
+    <key name="terminal-scrollback" type="i">
+      <default>10000</default>
+      <summary>Terminal scrollback lines</summary>
+    </key>
+  </schema>
+</schemalist>

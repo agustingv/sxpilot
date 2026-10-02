@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=SxPilot
+GenericName=SSH Connection Manager
+Comment=Manage and open SSH and SFTP connections in tabs
+Exec=sxpilot
+Icon=@APP_ID@
+Terminal=false
+Type=Application
+Categories=GTK;GNOME;Network;RemoteAccess;
+Keywords=ssh;sftp;terminal;remote;server;
+StartupNotify=true
+DBusActivatable=false
