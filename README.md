@@ -36,6 +36,77 @@ options or `~/.ssh/config` are disabled for it. After an authentication or
 host key error it doesn't retry by itself, to avoid triggering fail2ban;
 when the server is unreachable it retries with increasing delays.
 
+### Alerts
+
+Preferences → Alerts sets these rules, which apply to every monitored server:
+
+- server unreachable
+- CPU, memory and disk usage above a percentage
+- how many minutes a condition must last before it alerts (to ignore
+  spikes)
+
+Extensions can add their own rules. When an alert fires, SxPilot sends a
+desktop notification. It sends another when the alert clears, and clicking
+either opens the server's monitor. Active alerts also show as an orange dot
+in the sidebar, a warning icon on the monitor tab and a list at the top of
+it. You can turn alerts off per connection.
+
+### Extensions
+
+Extensions add service metrics to the monitor. SxPilot ships extensions for
+Nginx, Apache, MySQL/MariaDB, PostgreSQL and Redis/Valkey. You enable them,
+and set their parameters, in each connection. The connection dialog shows
+the exact command each one runs on the server.
+
+An extension is a JSON file. Files in `~/.local/share/sxpilot/extensions/`
+replace bundled ones with the same `id`. In the Flatpak, that folder is
+`~/.var/app/io.github.agustingv.sxpilot/data/sxpilot/extensions/`.
+Preferences → Monitoring Extensions opens it and reloads the files.
+
+```json
+{
+  "id": "nginx",
+  "name": "Nginx",
+  "description": "Connections and requests from the stub_status page",
+  "hint": "Shown when the command fails: how to set up the server",
+  "params": [
+    { "key": "status_url", "label": "Status URL", "default": "http://127.0.0.1/nginx_status" }
+  ],
+  "command": "curl -fsS --max-time 5 ${status_url}",
+  "parser": { "type": "regex", "patterns": { "active": "Active connections:\\s*(\\d+)" } },
+  "metrics": [
+    { "key": "active", "label": "Active connections", "chart": true }
+  ]
+}
+```
+
+- `detect` (optional) runs once when the monitoring session starts. If it
+  exits with 0, the monitor tab suggests enabling the extension. You can
+  enable the suggestion (after seeing the command) or dismiss it. The bundled
+  extensions look for the service's process in `/proc/*/comm`.
+- `command` runs with `sh -c` on the server on every sample, under
+  `timeout 10` when available. `${key}` is replaced by the parameter's value,
+  shell-quoted, so a value is always a single argument.
+- `parser.type`:
+  - `keyvalue` (`Key: value` lines, `separator` defaults to `:`)
+  - `table` (whitespace-separated columns, `key_column` and `value_column`
+    default to 0 and 1)
+  - `regex` (`patterns` maps each key to a regex whose first group is the
+    value)
+  - `json` (nested keys joined with dots, e.g. `a.b.0`)
+- Metric options:
+  - `format`: `number` (default), `percent`, `bytes`, `kib`, `duration`
+    (seconds) or `text`
+  - `unit`: text shown after a number
+  - `rate`: shows a counter's change per second
+  - `chart`: draws its history
+  - `alert`: e.g. `{"above": 0, "message": "Redis is rejecting
+    connections"}` (or `below`). It is compared with the value shown, so with
+    the per-second value when `rate` is set.
+
+The commands run as the SSH user. Give services their credentials on the
+server, e.g. in `~/.my.cnf` or `~/.pgpass`, never in the command.
+
 ## Building
 
 Dependencies (Debian/Ubuntu package names):

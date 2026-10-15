@@ -1,0 +1,21 @@
+{
+  "id": "apache",
+  "name": "Apache HTTP Server",
+  "description": "Workers, requests and traffic from mod_status",
+  "hint": "Enable mod_status (a2enmod status) and allow /server-status from localhost. Add “ExtendedStatus On” for request and traffic counters. Needs curl or wget.",
+  "detect": "grep -qsxE 'apache2|httpd' /proc/[0-9]*/comm",
+  "params": [
+    {"key": "status_url", "label": "Status URL", "default": "http://127.0.0.1/server-status?auto"}
+  ],
+  "command": "if command -v curl >/dev/null; then curl -fsS --max-time 5 ${status_url}; else wget -qO- -T 5 ${status_url}; fi",
+  "parser": {"type": "keyvalue", "separator": ":"},
+  "metrics": [
+    {"key": "BusyWorkers", "label": "Busy workers", "chart": true},
+    {"key": "IdleWorkers", "label": "Idle workers"},
+    {"key": "Total Accesses", "label": "Requests", "unit": "req", "rate": true, "chart": true},
+    {"key": "Total kBytes", "label": "Traffic", "format": "kib", "rate": true},
+    {"key": "ConnsTotal", "label": "Connections"},
+    {"key": "ServerUptimeSeconds", "label": "Uptime", "format": "duration"},
+    {"key": "ServerVersion", "label": "Version", "format": "text"}
+  ]
+}

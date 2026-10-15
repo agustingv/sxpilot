@@ -1,0 +1,19 @@
+{
+  "id": "mysql",
+  "name": "MySQL / MariaDB",
+  "description": "Connections, queries and traffic from SHOW GLOBAL STATUS",
+  "hint": "Runs the mysql client as the SSH user. Put credentials in ~/.my.cnf on the server (a [client] section with user and password, mode 600), or use a user with socket authentication.",
+  "detect": "grep -qsxE 'mysqld|mariadbd' /proc/[0-9]*/comm",
+  "command": "mysql -NB -e \"SHOW GLOBAL STATUS WHERE Variable_name IN ('Threads_connected','Threads_running','Questions','Slow_queries','Aborted_connects','Bytes_received','Bytes_sent','Uptime')\"",
+  "parser": {"type": "table", "key_column": 0, "value_column": 1},
+  "metrics": [
+    {"key": "Threads_connected", "label": "Connections", "chart": true},
+    {"key": "Threads_running", "label": "Running threads"},
+    {"key": "Questions", "label": "Queries", "unit": "q", "rate": true, "chart": true},
+    {"key": "Slow_queries", "label": "Slow queries", "rate": true, "unit": "q", "alert": {"above": 1, "message": "Many slow queries"}},
+    {"key": "Aborted_connects", "label": "Aborted connections"},
+    {"key": "Bytes_received", "label": "Received", "format": "bytes", "rate": true},
+    {"key": "Bytes_sent", "label": "Sent", "format": "bytes", "rate": true},
+    {"key": "Uptime", "label": "Uptime", "format": "duration"}
+  ]
+}

@@ -42,7 +42,119 @@ namespace SxPilot {
             monitoring.add (interval);
 
             page.add (monitoring);
+
+            var alerts = new Adw.PreferencesGroup ();
+            alerts.title = "Alerts";
+            alerts.description = "Desktop notifications for monitored servers. A threshold of 0 disables that alert.";
+
+            var enabled = new Adw.SwitchRow ();
+            enabled.title = "Enable Alerts";
+            settings.bind ("alerts-enabled", enabled, "active", SettingsBindFlags.DEFAULT);
+            alerts.add (enabled);
+
+            var offline = new Adw.SwitchRow ();
+            offline.title = "Server Unreachable";
+            settings.bind ("alert-offline", offline, "active", SettingsBindFlags.DEFAULT);
+            alerts.add (offline);
+
+            alerts.add (threshold_row (settings, "alert-cpu", "CPU Usage Above"));
+            alerts.add (threshold_row (settings, "alert-memory", "Memory Usage Above"));
+            alerts.add (threshold_row (settings, "alert-disk", "Disk Usage Above"));
+
+            var minutes = new Adw.SpinRow.with_range (0, 60, 1);
+            minutes.title = "Minimum Duration";
+            minutes.subtitle = "Minutes a condition must last before alerting";
+            settings.bind ("alert-minutes", minutes, "value", SettingsBindFlags.DEFAULT);
+            alerts.add (minutes);
+
+            enabled.bind_property ("active", offline, "sensitive", BindingFlags.SYNC_CREATE);
+            enabled.bind_property ("active", minutes, "sensitive", BindingFlags.SYNC_CREATE);
+            foreach (var row in threshold_rows) {
+                enabled.bind_property ("active", row, "sensitive", BindingFlags.SYNC_CREATE);
+            }
+
+            page.add (alerts);
+
+            extensions_group = new Adw.PreferencesGroup ();
+            extensions_group.title = "Monitoring Extensions";
+            extensions_group.description = "Add your own as JSON files in %s. Enable them in each connection."
+                .printf (Markup.escape_text (ExtensionRegistry.user_dir ()));
+
+            var buttons = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
+            var open_folder = new Gtk.Button.from_icon_name ("folder-open-symbolic");
+            open_folder.tooltip_text = "Open Extensions Folder";
+            open_folder.add_css_class ("flat");
+            open_folder.clicked.connect (open_extensions_folder);
+            buttons.append (open_folder);
+            var reload = new Gtk.Button.from_icon_name ("view-refresh-symbolic");
+            reload.tooltip_text = "Reload Extensions";
+            reload.add_css_class ("flat");
+            reload.clicked.connect (() => {
+                ExtensionRegistry.get_default ().load ();
+                /* Restarts the monitors whose extensions changed. */
+                MonitorManager.get_default ().sync ();
+                fill_extensions ();
+                add_toast (new Adw.Toast ("%u extensions loaded".printf (ExtensionRegistry.get_default ().extensions.length)));
+            });
+            buttons.append (reload);
+            extensions_group.header_suffix = buttons;
+
+            fill_extensions ();
+            page.add (extensions_group);
             add (page);
+        }
+
+        private GenericArray<Gtk.Widget> threshold_rows = new GenericArray<Gtk.Widget> ();
+
+        private Adw.SpinRow threshold_row (Settings settings, string key, string title) {
+            var row = new Adw.SpinRow.with_range (0, 100, 5);
+            row.title = title;
+            row.subtitle = "Percent";
+            settings.bind (key, row, "value", SettingsBindFlags.DEFAULT);
+            threshold_rows.add (row);
+            return row;
+        }
+
+        private Adw.PreferencesGroup extensions_group;
+        private GenericArray<Gtk.Widget> extension_rows = new GenericArray<Gtk.Widget> ();
+
+        private void fill_extensions () {
+            foreach (var row in extension_rows) {
+                extensions_group.remove (row);
+            }
+            extension_rows = new GenericArray<Gtk.Widget> ();
+
+            var registry = ExtensionRegistry.get_default ();
+            if (registry.extensions.length == 0) {
+                var empty = new Adw.ActionRow ();
+                empty.title = "No extensions installed";
+                empty.add_css_class ("dim-label");
+                extensions_group.add (empty);
+                extension_rows.add (empty);
+                return;
+            }
+            foreach (var ext in registry.extensions) {
+                var row = new Adw.ActionRow ();
+                row.title = Markup.escape_text (ext.name);
+                row.subtitle = Markup.escape_text (ext.path);
+                row.subtitle_lines = 1;
+                row.tooltip_text = ext.path;
+                extensions_group.add (row);
+                extension_rows.add (row);
+            }
+        }
+
+        private void open_extensions_folder () {
+            var dir = ExtensionRegistry.user_dir ();
+            DirUtils.create_with_parents (dir, 0755);
+            var launcher = new Gtk.FileLauncher (File.new_for_path (dir));
+            launcher.launch.begin (get_root () as Gtk.Window, null, (obj, res) => {
+                try {
+                    launcher.launch.end (res);
+                } catch (Error e) {
+                    add_toast (new Adw.Toast ("Could not open the folder"));
+                }
+            });
         }
     }
 }

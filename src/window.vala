@@ -312,7 +312,13 @@ namespace SxPilot {
             page.tooltip = "%s — Monitor".printf (connection.summary);
             page.icon = new ThemedIcon ("power-profile-performance-symbolic");
             page.live_thumbnail = false;
-            tab.monitor.notify["state"].connect (() => update_monitor_page_state (page, tab));
+            /* Through the tab: the monitor may outlive it. */
+            tab.status_changed.connect (() => update_monitor_page_state (page, tab));
+            tab.alert_raised.connect (() => {
+                if (tab_view.selected_page != page || !is_active) {
+                    page.needs_attention = true;
+                }
+            });
             tab.notify["title"].connect (() => {
                 if (page == tab_view.selected_page) {
                     update_title ();
@@ -329,8 +335,17 @@ namespace SxPilot {
         private void update_monitor_page_state (Adw.TabPage page, MonitorTab tab) {
             var state = tab.monitor.state;
             bool problem = state == MonitorState.OFFLINE || state == MonitorState.ERROR;
-            page.indicator_icon = problem ? new ThemedIcon ("network-offline-symbolic") : null;
-            page.indicator_tooltip = problem ? tab.monitor.message : "";
+            var alerts = tab.monitor.alerts.count;
+            if (problem) {
+                page.indicator_icon = new ThemedIcon ("network-offline-symbolic");
+                page.indicator_tooltip = tab.monitor.message;
+            } else if (alerts > 0) {
+                page.indicator_icon = new ThemedIcon ("dialog-warning-symbolic");
+                page.indicator_tooltip = alerts == 1 ? "1 active alert" : "%u active alerts".printf (alerts);
+            } else {
+                page.indicator_icon = null;
+                page.indicator_tooltip = "";
+            }
             page.loading = state == MonitorState.CONNECTING;
             if (page == tab_view.selected_page) {
                 update_title ();

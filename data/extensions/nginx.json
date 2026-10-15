@@ -1,0 +1,30 @@
+{
+  "id": "nginx",
+  "name": "Nginx",
+  "description": "Connections and requests from the stub_status page",
+  "hint": "Enable stub_status in a location reachable from the server, e.g. “location = /nginx_status { stub_status; allow 127.0.0.1; deny all; }”. Needs curl or wget.",
+  "detect": "grep -qsx nginx /proc/[0-9]*/comm",
+  "params": [
+    {"key": "status_url", "label": "Status URL", "default": "http://127.0.0.1/nginx_status"}
+  ],
+  "command": "if command -v curl >/dev/null; then curl -fsS --max-time 5 ${status_url}; else wget -qO- -T 5 ${status_url}; fi",
+  "parser": {
+    "type": "regex",
+    "patterns": {
+      "active": "Active connections:\\s*(\\d+)",
+      "accepts": "^\\s*(\\d+)\\s+\\d+\\s+\\d+\\s*$",
+      "requests": "^\\s*\\d+\\s+\\d+\\s+(\\d+)\\s*$",
+      "reading": "Reading:\\s*(\\d+)",
+      "writing": "Writing:\\s*(\\d+)",
+      "waiting": "Waiting:\\s*(\\d+)"
+    }
+  },
+  "metrics": [
+    {"key": "active", "label": "Active connections", "chart": true},
+    {"key": "requests", "label": "Requests", "unit": "req", "rate": true, "chart": true},
+    {"key": "accepts", "label": "Accepted connections", "unit": "conn", "rate": true},
+    {"key": "reading", "label": "Reading"},
+    {"key": "writing", "label": "Writing"},
+    {"key": "waiting", "label": "Waiting (keep-alive)"}
+  ]
+}

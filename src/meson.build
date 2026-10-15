@@ -9,6 +9,7 @@ config_h = configure_file(output: 'config.h', configuration: conf)
 common_args = ['-include', 'config.h']
 
 posix_dep = meson.get_compiler('vala').find_library('posix')
+m_dep = meson.get_compiler('c').find_library('m', required: false)
 secret_dep = dependency('libsecret-1')
 adw_dep = dependency('libadwaita-1', version: '>= 1.5')
 gtk_dep = dependency('gtk4', version: '>= 4.14')
@@ -19,6 +20,8 @@ executable('sxpilot',
   'models.vala',
   'store.vala',
   'ssh-env.vala',
+  'extensions.vala',
+  'alerts.vala',
   'monitor.vala',
   'monitor-widgets.vala',
   'monitor-tab.vala',
@@ -37,6 +40,7 @@ executable('sxpilot',
     dependency('json-glib-1.0'),
     secret_dep,
     posix_dep,
+    m_dep,
   ],
   install: true,
 )

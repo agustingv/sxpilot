@@ -15,6 +15,19 @@ namespace SxPilot {
             };
             add_action_entries (entries, this);
 
+            /* Target of alert notifications. */
+            var show_monitor = new SimpleAction ("show-monitor", VariantType.STRING);
+            show_monitor.activate.connect ((a, param) => {
+                var c = Store.get_default ().find_connection (param.get_string ());
+                if (c == null) {
+                    return;
+                }
+                var win = (active_window as Window) ?? new Window (this);
+                win.open_monitor (c);
+                win.present ();
+            });
+            add_action (show_monitor);
+
             set_accels_for_action ("app.quit", { "<Control><Shift>q" });
             set_accels_for_action ("app.new-window", { "<Control><Shift>n" });
             set_accels_for_action ("app.preferences", { "<Control>comma" });
@@ -47,6 +60,7 @@ namespace SxPilot {
                 .status-dot.online { background-color: @success_color; opacity: 1; }
                 .status-dot.offline { background-color: @error_color; opacity: 1; }
                 .status-dot.error { background-color: @warning_color; opacity: 1; }
+                .status-dot.alert { background-color: @warning_color; opacity: 1; }
             """);
             Gtk.StyleContext.add_provider_for_display (Gdk.Display.get_default (), css,
                                                        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
