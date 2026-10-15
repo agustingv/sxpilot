@@ -2,6 +2,7 @@ conf = configuration_data()
 conf.set_quoted('APP_ID', app_id)
 conf.set_quoted('VERSION', meson.project_version())
 conf.set_quoted('GETTEXT_PACKAGE', meson.project_name())
+conf.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
 conf.set_quoted('ASKPASS_PATH', get_option('prefix') / get_option('libexecdir') / 'sxpilot-askpass')
 
 config_h = configure_file(output: 'config.h', configuration: conf)
@@ -16,6 +17,7 @@ gtk_dep = dependency('gtk4', version: '>= 4.14')
 
 executable('sxpilot',
   'config.vapi',
+  'i18n.vala',
   'secrets.vala',
   'models.vala',
   'store.vala',
@@ -47,6 +49,7 @@ executable('sxpilot',
 
 executable('sxpilot-askpass',
   'config.vapi',
+  'i18n.vala',
   'secrets.vala',
   'askpass.vala',
   c_args: common_args,

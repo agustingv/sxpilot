@@ -112,20 +112,20 @@ namespace SxPilot {
         }
 
         construct {
-            title = "%s (Monitor)".printf (connection.display_name);
+            title = _("%s (Monitor)").printf (connection.display_name);
             connection.notify["name"].connect (() => {
-                title = "%s (Monitor)".printf (connection.display_name);
+                title = _("%s (Monitor)").printf (connection.display_name);
             });
 
             banner = new Adw.Banner ("");
-            banner.button_label = "_Retry";
+            banner.button_label = _("_Retry");
             banner.button_clicked.connect (() => monitor.restart ());
             append (banner);
 
             /* Shown until the first sample arrives. */
             status_page = new Adw.StatusPage ();
             status_page.icon_name = "power-profile-performance-symbolic";
-            retry_button = new Gtk.Button.with_mnemonic ("_Retry");
+            retry_button = new Gtk.Button.with_mnemonic (_("_Retry"));
             retry_button.halign = Gtk.Align.CENTER;
             retry_button.add_css_class ("pill");
             retry_button.clicked.connect (() => monitor.restart ());
@@ -159,6 +159,9 @@ namespace SxPilot {
             detail = new Gtk.Label ("");
             detail.xalign = 0;
             detail.wrap = true;
+            /* Wrap instead of widening the card, so two cards fit side by
+             * side even with longer translations. */
+            detail.max_width_chars = 24;
             detail.add_css_class ("dim-label");
             detail.add_css_class ("numeric");
 
@@ -195,12 +198,12 @@ namespace SxPilot {
             header.append (info_label);
 
             alerts_group = new Adw.PreferencesGroup ();
-            alerts_group.title = "Active Alerts";
+            alerts_group.title = _("Active Alerts");
             alerts_group.visible = false;
 
             detected_group = new Adw.PreferencesGroup ();
-            detected_group.title = "Services Detected";
-            detected_group.description = "Enable an extension to monitor these services too";
+            detected_group.title = _("Services Detected");
+            detected_group.description = _("Enable an extension to monitor these services too");
             detected_group.visible = false;
 
             var cards = new Gtk.FlowBox ();
@@ -211,13 +214,13 @@ namespace SxPilot {
             cards.column_spacing = 12;
             cards.row_spacing = 12;
             cards.append (build_card ("CPU", out cpu_value, out cpu_detail, out cpu_chart));
-            cards.append (build_card ("Memory", out mem_value, out mem_detail, out mem_chart));
+            cards.append (build_card (_("Memory"), out mem_value, out mem_detail, out mem_chart));
             for (var child = cards.get_first_child (); child != null; child = child.get_next_sibling ()) {
                 ((Gtk.FlowBoxChild) child).focusable = false;
             }
 
             disk_group = new Adw.PreferencesGroup ();
-            disk_group.title = "Disks";
+            disk_group.title = _("Disks");
 
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 24);
             box.margin_top = box.margin_bottom = 24;
@@ -253,17 +256,17 @@ namespace SxPilot {
                 switch (state) {
                     case MonitorState.OFFLINE:
                         status_page.icon_name = "network-offline-symbolic";
-                        status_page.title = "Server Unreachable";
+                        status_page.title = _("Server Unreachable");
                         status_page.description = Markup.escape_text (monitor.message);
                         break;
                     case MonitorState.ERROR:
                         status_page.icon_name = "dialog-warning-symbolic";
-                        status_page.title = "Cannot Monitor Server";
+                        status_page.title = _("Cannot Monitor Server");
                         status_page.description = Markup.escape_text (monitor.message);
                         break;
                     default:
                         status_page.icon_name = "power-profile-performance-symbolic";
-                        status_page.title = "Connecting…";
+                        status_page.title = _("Connecting…");
                         status_page.description = Markup.escape_text (connection.summary);
                         break;
                 }
@@ -287,28 +290,30 @@ namespace SxPilot {
                 info += m.os;
             }
             if (m.cores > 0) {
-                info += m.cores == 1 ? "1 core" : "%d cores".printf (m.cores);
+                info += ngettext ("%d core", "%d cores", m.cores).printf (m.cores);
             }
             if (m.uptime_seconds >= 0) {
-                info += "up %s".printf (format_uptime (m.uptime_seconds));
+                /* Translators: %s is a duration such as "3d 4h". */
+                info += _("up %s").printf (format_uptime (m.uptime_seconds));
             }
             if (m.last_update != null) {
-                info += "updated %s".printf (m.last_update.format ("%X"));
+                /* Translators: %s is a time of day. */
+                info += _("updated %s").printf (m.last_update.format ("%X"));
             }
             info_label.label = string.joinv (" · ", info);
 
             cpu_value.label = m.cpu_percent >= 0 ? "%.0f %%".printf (m.cpu_percent) : "—";
             cpu_detail.label = m.load1 >= 0
-                ? "Load average %.2f · %.2f · %.2f".printf (m.load1, m.load5, m.load15)
+                ? _("Load average %.2f · %.2f · %.2f").printf (m.load1, m.load5, m.load15)
                 : "";
             cpu_chart.set_values (m.cpu_history.values);
 
             if (m.mem_percent >= 0) {
                 mem_value.label = "%.0f %%".printf (m.mem_percent);
-                var detail = "%s of %s".printf (format_kib (m.mem_total_kb - m.mem_available_kb),
+                var detail = _("%s of %s").printf (format_kib (m.mem_total_kb - m.mem_available_kb),
                                                 format_kib (m.mem_total_kb));
                 if (m.swap_total_kb > 0) {
-                    detail += " · Swap %s of %s".printf (format_kib (m.swap_total_kb - m.swap_free_kb),
+                    detail += _(" · Swap %s of %s").printf (format_kib (m.swap_total_kb - m.swap_free_kb),
                                                           format_kib (m.swap_total_kb));
                 }
                 mem_detail.label = detail;
@@ -371,11 +376,11 @@ namespace SxPilot {
 
                 var dismiss = new Gtk.Button.from_icon_name ("window-close-symbolic");
                 dismiss.valign = Gtk.Align.CENTER;
-                dismiss.tooltip_text = "Don’t Suggest Again";
+                dismiss.tooltip_text = _("Don’t Suggest Again");
                 dismiss.add_css_class ("flat");
                 dismiss.clicked.connect (() => dismiss_extension (ext));
 
-                var enable = new Gtk.Button.with_mnemonic ("_Enable…");
+                var enable = new Gtk.Button.with_mnemonic (_("_Enable…"));
                 enable.valign = Gtk.Align.CENTER;
                 enable.add_css_class ("suggested-action");
                 enable.clicked.connect (() => confirm_enable (ext));
@@ -396,8 +401,8 @@ namespace SxPilot {
 
         /* Show the exact command before it starts running on the server. */
         private void confirm_enable (Extension ext) {
-            var body = "This command will run on “%s” on every sample:".printf (connection.display_name);
-            var dialog = new Adw.AlertDialog ("Enable %s?".printf (ext.name), body);
+            var body = _("This command will run on “%s” on every sample:").printf (connection.display_name);
+            var dialog = new Adw.AlertDialog (_("Enable %s?").printf (ext.name), body);
 
             /* The command as it will run, with this connection's params. */
             string text;
@@ -420,7 +425,7 @@ namespace SxPilot {
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 12);
             box.append (command);
             if (ext.params.length > 0) {
-                var note = new Gtk.Label ("Change the parameters in the connection settings.");
+                var note = new Gtk.Label (_("Change the parameters in the connection settings."));
                 note.wrap = true;
                 note.xalign = 0;
                 note.add_css_class ("dim-label");
@@ -434,8 +439,8 @@ namespace SxPilot {
                 box.append (hint);
             }
             dialog.extra_child = box;
-            dialog.add_response ("cancel", "_Cancel");
-            dialog.add_response ("enable", "_Enable");
+            dialog.add_response ("cancel", _("_Cancel"));
+            dialog.add_response ("enable", _("_Enable"));
             dialog.set_response_appearance ("enable", Adw.ResponseAppearance.SUGGESTED);
             dialog.default_response = "enable";
             dialog.close_response = "cancel";
@@ -499,7 +504,7 @@ namespace SxPilot {
                     disk_rows.insert (d.mount, row);
                     disk_group.add (row);
                 }
-                row.subtitle = "%.0f %% · %s of %s · %s".printf (d.percent, format_kib (d.used_kb),
+                row.subtitle = _("%.0f %% · %s of %s · %s").printf (d.percent, format_kib (d.used_kb),
                                                                    format_kib (d.size_kb),
                                                                    Markup.escape_text (d.device));
                 row.get_data<Gtk.LevelBar> ("bar").value = d.percent;

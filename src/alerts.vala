@@ -57,22 +57,24 @@ namespace SxPilot {
             }
         }
 
-        private static string describe_delay (int minutes) {
+        /* "Above 90 %" → "Above 90 % for 2 minutes" */
+        private static string with_delay (string text, int minutes) {
             if (minutes <= 0) {
-                return "";
+                return text;
             }
-            return minutes == 1 ? " for 1 minute" : " for %d minutes".printf (minutes);
+            /* Translators: the first %s is a condition, e.g. "Above 90 %". */
+            return ngettext ("%s for %d minute", "%s for %d minutes", minutes).printf (text, minutes);
         }
 
         private GenericArray<Condition> conditions (Settings settings) {
             var list = new GenericArray<Condition> ();
             var m = monitor;
-            var delay = describe_delay (settings.get_int ("alert-minutes"));
+            var minutes = settings.get_int ("alert-minutes");
 
             if (settings.get_boolean ("alert-offline")) {
                 list.add (new Condition ("offline", m.state == MonitorState.OFFLINE,
-                                         "Server unreachable",
-                                         m.message != "" ? m.message : "No response%s".printf (delay)));
+                                         _("Server unreachable"),
+                                         m.message != "" ? m.message : with_delay (_("No response"), minutes)));
             }
             /* Metrics are only meaningful while samples arrive; otherwise
              * their rules keep their current state. */
@@ -83,21 +85,21 @@ namespace SxPilot {
             var cpu = settings.get_int ("alert-cpu");
             if (cpu > 0 && m.cpu_percent >= 0) {
                 list.add (new Condition ("cpu", m.cpu_percent >= cpu,
-                                         "CPU at %.0f %%".printf (m.cpu_percent),
-                                         "Above %d %%%s".printf (cpu, delay)));
+                                         _("CPU at %.0f %%").printf (m.cpu_percent),
+                                         with_delay (_("Above %d %%").printf (cpu), minutes)));
             }
             var mem = settings.get_int ("alert-memory");
             if (mem > 0 && m.mem_percent >= 0) {
                 list.add (new Condition ("memory", m.mem_percent >= mem,
-                                         "Memory at %.0f %%".printf (m.mem_percent),
-                                         "Above %d %%%s".printf (mem, delay)));
+                                         _("Memory at %.0f %%").printf (m.mem_percent),
+                                         with_delay (_("Above %d %%").printf (mem), minutes)));
             }
             var disk = settings.get_int ("alert-disk");
             if (disk > 0) {
                 foreach (var d in m.disks) {
                     list.add (new Condition ("disk:" + d.mount, d.percent >= disk,
-                                             "Disk %s at %.0f %%".printf (d.mount, d.percent),
-                                             "%s free of %s".printf (format_kib (d.size_kb - d.used_kb),
+                                             _("Disk %s at %.0f %%").printf (d.mount, d.percent),
+                                             _("%s free of %s").printf (format_kib (d.size_kb - d.used_kb),
                                                                      format_kib (d.size_kb))));
                 }
             }
@@ -114,14 +116,14 @@ namespace SxPilot {
                     bool on = (!metric.alert_above.is_nan () && v > metric.alert_above)
                            || (!metric.alert_below.is_nan () && v < metric.alert_below);
                     var limit = !metric.alert_above.is_nan ()
-                        ? "Above %s".printf (metric.format_value (metric.alert_above))
-                        : "Below %s".printf (metric.format_value (metric.alert_below));
+                        ? _("Above %s").printf (metric.format_value (metric.alert_above))
+                        : _("Below %s").printf (metric.format_value (metric.alert_below));
                     var title = metric.alert_message != ""
                         ? metric.alert_message
                         : "%s: %s".printf (r.extension.name, metric.label);
                     list.add (new Condition ("ext:%s:%s".printf (r.extension.id, metric.key), on,
                                              "%s (%s)".printf (title, metric.format_value (v)),
-                                             limit + delay));
+                                             with_delay (limit, minutes)));
                 }
             }
             return list;

@@ -30,7 +30,7 @@ namespace SxPilot {
                 : connection.display_name;
 
             banner = new Adw.Banner ("");
-            banner.button_label = "_Reconnect";
+            banner.button_label = _("_Reconnect");
             banner.button_clicked.connect (() => start ());
             append (banner);
 
@@ -124,17 +124,17 @@ namespace SxPilot {
 
             var menu = new Menu ();
             var edit = new Menu ();
-            edit.append ("_Copy", "term.copy");
-            edit.append ("_Paste", "term.paste");
-            edit.append ("Select _All", "term.select-all");
+            edit.append (_("_Copy"), "term.copy");
+            edit.append (_("_Paste"), "term.paste");
+            edit.append (_("Select _All"), "term.select-all");
             menu.append_section (null, edit);
             var zoom = new Menu ();
-            zoom.append ("Zoom _In", "term.zoom-in");
-            zoom.append ("Zoom _Out", "term.zoom-out");
-            zoom.append ("_Normal Size", "term.zoom-reset");
+            zoom.append (_("Zoom _In"), "term.zoom-in");
+            zoom.append (_("Zoom _Out"), "term.zoom-out");
+            zoom.append (_("_Normal Size"), "term.zoom-reset");
             menu.append_section (null, zoom);
             var conn = new Menu ();
-            conn.append ("_Reconnect", "term.reconnect");
+            conn.append (_("_Reconnect"), "term.reconnect");
             menu.append_section (null, conn);
             terminal.context_menu_model = menu;
 
@@ -172,7 +172,7 @@ namespace SxPilot {
             try {
                 argv = connection.build_argv (protocol, password_saved);
             } catch (ShellError e) {
-                show_error ("Invalid extra options: %s".printf (e.message));
+                show_error (_("Invalid extra options: %s").printf (e.message));
                 return;
             }
 
@@ -188,7 +188,7 @@ namespace SxPilot {
                                   null,
                                   (term, pid, error) => {
                 if (error != null) {
-                    show_error ("Could not start %s: %s".printf (argv[0], error.message));
+                    show_error (_("Could not start %s: %s").printf (argv[0], error.message));
                     return;
                 }
                 child_pid = pid;
@@ -209,9 +209,9 @@ namespace SxPilot {
             string message;
             if (Process.if_exited (status)) {
                 var code = Process.exit_status (status);
-                message = code == 0 ? "Connection closed" : "Connection closed (exit code %d)".printf (code);
+                message = code == 0 ? _("Connection closed") : _("Connection closed (exit code %d)").printf (code);
             } else {
-                message = "Connection terminated";
+                message = _("Connection terminated");
             }
             terminal.feed ("\r\n\x1b[2m[%s]\x1b[0m\r\n".printf (message).data);
             banner.title = message;

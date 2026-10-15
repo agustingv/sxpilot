@@ -101,8 +101,10 @@ namespace SxPilot {
             about.version = Config.VERSION;
             about.developer_name = "Agustín García";
             about.developers = { "Agustín García" };
-            about.comments = "Manage groups of SSH and SFTP connections and keep them open in tabs.";
+            about.comments = _("Manage groups of SSH and SFTP connections and keep them open in tabs.");
             about.license_type = Gtk.License.GPL_3_0;
+            /* Translators: your name, shown in the About dialog. */
+            about.translator_credits = _("translator-credits");
             about.present (active_window);
         }
     }

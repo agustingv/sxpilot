@@ -1,10 +1,16 @@
 desktop_conf = configuration_data()
 desktop_conf.set('APP_ID', app_id)
 
-desktop_file = configure_file(
-  input: 'sxpilot.desktop.in',
+# Substitute the app id, then merge the translations from po/.
+desktop_file = i18n.merge_file(
+  input: configure_file(
+    input: 'sxpilot.desktop.in',
+    output: app_id + '.desktop.in',
+    configuration: desktop_conf,
+  ),
   output: app_id + '.desktop',
-  configuration: desktop_conf,
+  type: 'desktop',
+  po_dir: '../po',
   install: true,
   install_dir: get_option('datadir') / 'applications',
 )
@@ -14,10 +20,14 @@ if desktop_utils.found()
   test('Validate desktop file', desktop_utils, args: [desktop_file])
 endif
 
-metainfo_file = configure_file(
-  input: 'sxpilot.metainfo.xml.in',
+metainfo_file = i18n.merge_file(
+  input: configure_file(
+    input: 'sxpilot.metainfo.xml.in',
+    output: app_id + '.metainfo.xml.in',
+    configuration: desktop_conf,
+  ),
   output: app_id + '.metainfo.xml',
-  configuration: desktop_conf,
+  po_dir: '../po',
   install: true,
   install_dir: get_option('datadir') / 'metainfo',
 )

@@ -41,7 +41,7 @@ namespace SxPilot {
         }
 
         construct {
-            title = connection == null ? "New Connection" : "Edit Connection";
+            title = connection == null ? _("New Connection") : _("Edit Connection");
             content_width = 480;
             content_height = 760;
 
@@ -49,11 +49,11 @@ namespace SxPilot {
             header.show_start_title_buttons = false;
             header.show_end_title_buttons = false;
 
-            var cancel = new Gtk.Button.with_mnemonic ("_Cancel");
+            var cancel = new Gtk.Button.with_mnemonic (_("_Cancel"));
             cancel.clicked.connect (() => close ());
             header.pack_start (cancel);
 
-            save_button = new Gtk.Button.with_mnemonic (connection == null ? "_Add" : "_Save");
+            save_button = new Gtk.Button.with_mnemonic (connection == null ? _("_Add") : _("_Save"));
             save_button.add_css_class ("suggested-action");
             save_button.clicked.connect (on_save);
             header.pack_end (save_button);
@@ -63,37 +63,37 @@ namespace SxPilot {
 
             /* Server */
             var server = new Adw.PreferencesGroup ();
-            server.title = "Server";
+            server.title = _("Server");
 
             name_row = new Adw.EntryRow ();
-            name_row.title = "Name";
+            name_row.title = _("Name");
             server.add (name_row);
 
             host_row = new Adw.EntryRow ();
-            host_row.title = "Host";
+            host_row.title = _("Host");
             host_row.input_purpose = Gtk.InputPurpose.URL;
             host_row.activates_default = true;
             server.add (host_row);
 
             port_row = new Adw.SpinRow.with_range (1, 65535, 1);
-            port_row.title = "Port";
+            port_row.title = _("Port");
             port_row.value = 22;
             server.add (port_row);
 
             user_row = new Adw.EntryRow ();
-            user_row.title = "Username";
+            user_row.title = _("Username");
             user_row.activates_default = true;
             server.add (user_row);
 
             var groups = new Gtk.StringList (null);
-            groups.append ("No Group");
+            groups.append (_("No Group"));
             group_ids += "";
             foreach (var g in Store.get_default ().sorted_groups ()) {
                 groups.append (g.name);
                 group_ids += g.id;
             }
             group_row = new Adw.ComboRow ();
-            group_row.title = "Group";
+            group_row.title = _("Group");
             group_row.model = groups;
             server.add (group_row);
 
@@ -101,23 +101,23 @@ namespace SxPilot {
 
             /* Authentication */
             var auth = new Adw.PreferencesGroup ();
-            auth.title = "Authentication";
+            auth.title = _("Authentication");
 
             auth_row = new Adw.ComboRow ();
-            auth_row.title = "Method";
-            auth_row.model = new Gtk.StringList ({ "SSH Agent / Default Keys", "Password", "Key File" });
+            auth_row.title = _("Method");
+            auth_row.model = new Gtk.StringList ({ _("SSH Agent / Default Keys"), _("Password"), _("Key File") });
             auth.add (auth_row);
 
             password_row = new Adw.PasswordEntryRow ();
-            password_row.title = "Password (stored in keyring, optional)";
+            password_row.title = _("Password (stored in keyring, optional)");
             auth.add (password_row);
 
             key_row = new Adw.ActionRow ();
-            key_row.title = "Key File";
-            key_row.subtitle = "None selected";
+            key_row.title = _("Key File");
+            key_row.subtitle = _("None selected");
             var choose = new Gtk.Button.from_icon_name ("document-open-symbolic");
             choose.valign = Gtk.Align.CENTER;
-            choose.tooltip_text = "Choose Key File";
+            choose.tooltip_text = _("Choose Key File");
             choose.add_css_class ("flat");
             choose.clicked.connect (choose_key_file);
             key_row.add_suffix (choose);
@@ -128,36 +128,35 @@ namespace SxPilot {
 
             /* Advanced */
             var adv = new Adw.PreferencesGroup ();
-            adv.title = "Advanced";
+            adv.title = _("Advanced");
 
             jump_row = new Adw.EntryRow ();
-            jump_row.title = "Jump Host (user@host:port)";
+            jump_row.title = _("Jump Host (user@host:port)");
             adv.add (jump_row);
 
             dir_row = new Adw.EntryRow ();
-            dir_row.title = "SFTP Initial Directory";
+            dir_row.title = _("SFTP Initial Directory");
             adv.add (dir_row);
 
             extra_row = new Adw.EntryRow ();
-            extra_row.title = "Extra SSH Options (e.g. -o ServerAliveInterval=30)";
+            extra_row.title = _("Extra SSH Options (e.g. -o ServerAliveInterval=30)");
             adv.add (extra_row);
 
             page.add (adv);
 
             /* Monitoring */
             var mon = new Adw.PreferencesGroup ();
-            mon.title = "Monitoring";
-            mon.description = "Keeps a background SSH session that reads CPU, memory and disk usage. "
-                + "Nothing is installed on the server. Linux only.";
+            mon.title = _("Monitoring");
+            mon.description = _("Keeps a background SSH session that reads CPU, memory and disk usage. Nothing is installed on the server. Linux only.");
 
             monitor_row = new Adw.SwitchRow ();
-            monitor_row.title = "Monitor Server";
-            monitor_row.subtitle = "Needs the SSH agent, a key without passphrase or a saved password";
+            monitor_row.title = _("Monitor Server");
+            monitor_row.subtitle = _("Needs the SSH agent, a key without passphrase or a saved password");
             mon.add (monitor_row);
 
             alerts_row = new Adw.SwitchRow ();
-            alerts_row.title = "Alerts";
-            alerts_row.subtitle = "Notify about thresholds and outages (set in Preferences)";
+            alerts_row.title = _("Alerts");
+            alerts_row.subtitle = _("Notify about thresholds and outages (set in Preferences)");
             alerts_row.active = true;
             mon.add (alerts_row);
 
@@ -166,9 +165,8 @@ namespace SxPilot {
             var registry = ExtensionRegistry.get_default ();
             if (registry.extensions.length > 0) {
                 var exts = new Adw.PreferencesGroup ();
-                exts.title = "Monitoring Extensions";
-                exts.description = "Each enabled extension runs its command on the server on every sample "
-                    + "while the server is monitored. Review the command before enabling it.";
+                exts.title = _("Monitoring Extensions");
+                exts.description = _("Each enabled extension runs its command on the server on every sample while the server is monitored. Review the command before enabling it.");
                 foreach (var ext in registry.extensions) {
                     exts.add (build_extension_row (ext));
                 }
@@ -250,7 +248,7 @@ namespace SxPilot {
             if (monitor != null) {
                 foreach (var d in monitor.detected) {
                     if (d.id == ext.id) {
-                        var tag = new Gtk.Label ("Detected");
+                        var tag = new Gtk.Label (_("Detected"));
                         tag.valign = Gtk.Align.CENTER;
                         tag.add_css_class ("caption");
                         tag.add_css_class ("accent");
@@ -262,7 +260,7 @@ namespace SxPilot {
 
             w.enabled = new Gtk.Switch ();
             w.enabled.valign = Gtk.Align.CENTER;
-            w.enabled.tooltip_text = "Enable %s".printf (ext.name);
+            w.enabled.tooltip_text = _("Enable %s").printf (ext.name);
             row.add_suffix (w.enabled);
 
             foreach (var p in ext.params) {
@@ -274,7 +272,7 @@ namespace SxPilot {
             }
 
             var command = new Adw.ActionRow ();
-            command.title = "Command";
+            command.title = _("Command");
             command.subtitle = Markup.escape_text (ext.command);
             command.subtitle_selectable = true;
             command.add_css_class ("property");
@@ -283,7 +281,7 @@ namespace SxPilot {
 
             if (ext.hint != "") {
                 var hint = new Adw.ActionRow ();
-                hint.title = "Server Setup";
+                hint.title = _("Server Setup");
                 hint.subtitle = Markup.escape_text (ext.hint);
                 hint.subtitle_selectable = true;
                 hint.add_css_class ("property");
@@ -291,7 +289,7 @@ namespace SxPilot {
             }
 
             var source = new Adw.ActionRow ();
-            source.title = "Defined In";
+            source.title = _("Defined In");
             source.subtitle = Markup.escape_text (ext.path);
             source.subtitle_selectable = true;
             source.add_css_class ("property");
@@ -335,7 +333,7 @@ namespace SxPilot {
 
         private void set_identity_file (string path) {
             identity_file = path;
-            key_row.subtitle = path != "" ? path : "None selected";
+            key_row.subtitle = path != "" ? path : _("None selected");
         }
 
         private void update_auth_visibility () {
@@ -375,7 +373,7 @@ namespace SxPilot {
 
         private void choose_key_file () {
             var dialog = new Gtk.FileDialog ();
-            dialog.title = "Choose Private Key";
+            dialog.title = _("Choose Private Key");
             dialog.modal = true;
             var ssh_dir = File.new_for_path (Path.build_filename (Environment.get_home_dir (), ".ssh"));
             if (ssh_dir.query_exists ()) {
@@ -412,7 +410,7 @@ namespace SxPilot {
             save_extensions (c);
 
             if (c.auth_method == AuthMethod.KEY_FILE && c.identity_file == "") {
-                toasts.add_toast (new Adw.Toast ("Choose a key file or use another method"));
+                toasts.add_toast (new Adw.Toast (_("Choose a key file or use another method")));
                 return;
             }
 

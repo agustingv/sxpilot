@@ -1,0 +1,20 @@
+# Files with translatable strings. Run `ninja -C build sxpilot-pot` after
+# changing them, then `ninja -C build sxpilot-update-po`.
+data/io.github.agustingv.sxpilot.gschema.xml
+data/sxpilot.desktop.in
+data/sxpilot.metainfo.xml.in
+po/extension-strings.vala
+src/alerts.vala
+src/application.vala
+src/askpass.vala
+src/connection-dialog.vala
+src/extensions.vala
+src/models.vala
+src/monitor-tab.vala
+src/monitor-widgets.vala
+src/monitor.vala
+src/preferences-dialog.vala
+src/sidebar.vala
+src/ssh-env.vala
+src/terminal-tab.vala
+src/window.vala
