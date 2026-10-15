@@ -121,7 +121,8 @@ namespace SxPilot {
 
         public Connection duplicate () {
             var c = new Connection ();
-            c.name = name + " (copy)";
+            /* Translators: name of a duplicated connection. */
+            c.name = _("%s (copy)").printf (name);
             c.group_id = group_id;
             c.host = host;
             c.port = port;

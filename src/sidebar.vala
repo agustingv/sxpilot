@@ -15,7 +15,7 @@ namespace SxPilot {
 
         construct {
             search = new Gtk.SearchEntry ();
-            search.placeholder_text = "Search connections";
+            search.placeholder_text = _("Search connections");
             search.margin_start = 12;
             search.margin_end = 12;
             search.margin_top = 6;
@@ -42,10 +42,10 @@ namespace SxPilot {
 
             var empty = new Adw.StatusPage ();
             empty.icon_name = "network-server-symbolic";
-            empty.title = "No Connections";
-            empty.description = "Add a server to get started";
+            empty.title = _("No Connections");
+            empty.description = _("Add a server to get started");
             empty.add_css_class ("compact");
-            var add = new Gtk.Button.with_mnemonic ("_Add Connection");
+            var add = new Gtk.Button.with_mnemonic (_("_Add Connection"));
             add.halign = Gtk.Align.CENTER;
             add.add_css_class ("pill");
             add.add_css_class ("suggested-action");
@@ -54,7 +54,7 @@ namespace SxPilot {
 
             var no_results = new Adw.StatusPage ();
             no_results.icon_name = "edit-find-symbolic";
-            no_results.title = "No Results";
+            no_results.title = _("No Results");
             no_results.add_css_class ("compact");
 
             stack = new Gtk.Stack ();
@@ -102,7 +102,7 @@ namespace SxPilot {
             foreach (var g in store.sorted_groups ()) {
                 shown += add_group (g.id, g.name, g);
             }
-            shown += add_group ("", "Ungrouped", null);
+            shown += add_group ("", _("Ungrouped"), null);
 
             stack.visible_child_name = filter != "" && shown == 0 ? "no-results" : "list";
         }
@@ -127,7 +127,7 @@ namespace SxPilot {
 
             var expander = new Adw.ExpanderRow ();
             expander.title = Markup.escape_text (name);
-            expander.subtitle = connections.length == 1 ? "1 connection" : "%u connections".printf (connections.length);
+            expander.subtitle = ngettext ("%u connection", "%u connections", connections.length).printf (connections.length);
             expander.add_prefix (new Gtk.Image.from_icon_name (group != null ? "folder-symbolic" : "folder-documents-symbolic"));
             expander.expanded = filter != "" || group == null || group.expanded;
             if (group != null) {
@@ -143,17 +143,17 @@ namespace SxPilot {
 
                 var menu = new Menu ();
                 var section = new Menu ();
-                section.append_item (target_item ("_New Connection…", "win.new-connection-in-group", id));
+                section.append_item (target_item (_("_New Connection…"), "win.new-connection-in-group", id));
                 menu.append_section (null, section);
                 section = new Menu ();
-                section.append_item (target_item ("_Rename…", "win.rename-group", id));
-                section.append_item (target_item ("_Delete", "win.delete-group", id));
+                section.append_item (target_item (_("_Rename…"), "win.rename-group", id));
+                section.append_item (target_item (_("_Delete"), "win.delete-group", id));
                 menu.append_section (null, section);
 
                 var button = new Gtk.MenuButton ();
                 button.icon_name = "view-more-symbolic";
                 button.valign = Gtk.Align.CENTER;
-                button.tooltip_text = "Group Options";
+                button.tooltip_text = _("Group Options");
                 button.add_css_class ("flat");
                 button.menu_model = menu;
                 expander.add_suffix (button);
@@ -167,7 +167,7 @@ namespace SxPilot {
             }
             if (connections.length == 0) {
                 var placeholder = new Adw.ActionRow ();
-                placeholder.title = "No connections";
+                placeholder.title = _("No connections");
                 placeholder.add_css_class ("dim-label");
                 expander.add_row (placeholder);
             }
@@ -188,7 +188,7 @@ namespace SxPilot {
             row.subtitle = Markup.escape_text (c.summary);
             row.title_lines = 1;
             row.subtitle_lines = 1;
-            row.tooltip_text = "Open SSH session";
+            row.tooltip_text = _("Open SSH session");
             row.activatable = true;
             row.set_action_name ("win.connect-ssh");
             row.set_action_target_value (new Variant.string (c.id));
@@ -196,7 +196,7 @@ namespace SxPilot {
 
             var sftp = new Gtk.Button.from_icon_name ("folder-remote-symbolic");
             sftp.valign = Gtk.Align.CENTER;
-            sftp.tooltip_text = "Open SFTP Session";
+            sftp.tooltip_text = _("Open SFTP Session");
             sftp.add_css_class ("flat");
             sftp.set_action_name ("win.connect-sftp");
             sftp.set_action_target_value (new Variant.string (c.id));
@@ -204,23 +204,23 @@ namespace SxPilot {
 
             var menu = new Menu ();
             var open = new Menu ();
-            open.append_item (target_item ("Open _SSH", "win.connect-ssh", c.id));
-            open.append_item (target_item ("Open S_FTP", "win.connect-sftp", c.id));
-            open.append_item (target_item ("Show _Monitor", "win.show-monitor", c.id));
+            open.append_item (target_item (_("Open _SSH"), "win.connect-ssh", c.id));
+            open.append_item (target_item (_("Open S_FTP"), "win.connect-sftp", c.id));
+            open.append_item (target_item (_("Show _Monitor"), "win.show-monitor", c.id));
             menu.append_section (null, open);
             var edit = new Menu ();
-            edit.append_item (target_item ("_Edit…", "win.edit-connection", c.id));
-            edit.append_item (target_item ("D_uplicate", "win.duplicate-connection", c.id));
-            edit.append_item (target_item ("Copy SSH _Command", "win.copy-command", c.id));
+            edit.append_item (target_item (_("_Edit…"), "win.edit-connection", c.id));
+            edit.append_item (target_item (_("D_uplicate"), "win.duplicate-connection", c.id));
+            edit.append_item (target_item (_("Copy SSH _Command"), "win.copy-command", c.id));
             menu.append_section (null, edit);
             var del = new Menu ();
-            del.append_item (target_item ("_Delete", "win.delete-connection", c.id));
+            del.append_item (target_item (_("_Delete"), "win.delete-connection", c.id));
             menu.append_section (null, del);
 
             var more = new Gtk.MenuButton ();
             more.icon_name = "view-more-symbolic";
             more.valign = Gtk.Align.CENTER;
-            more.tooltip_text = "Connection Options";
+            more.tooltip_text = _("Connection Options");
             more.add_css_class ("flat");
             more.menu_model = menu;
             row.add_suffix (more);

@@ -14,6 +14,7 @@ add_project_arguments('-w', language: 'c')
 
 subdir('data')
 subdir('src')
+subdir('po')
 
 gnome.post_install(
   glib_compile_schemas: true,

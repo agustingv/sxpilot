@@ -181,11 +181,14 @@ namespace SxPilot {
         var hours = (s % 86400) / 3600;
         var minutes = (s % 3600) / 60;
         if (days > 0) {
-            return "%lldd %lldh".printf (days, hours);
+            /* Translators: days and hours, keep it short. */
+            return _("%lldd %lldh").printf (days, hours);
         }
         if (hours > 0) {
-            return "%lldh %lldm".printf (hours, minutes);
+            /* Translators: hours and minutes, keep it short. */
+            return _("%lldh %lldm").printf (hours, minutes);
         }
-        return "%lldm".printf (minutes);
+        /* Translators: minutes, keep it short. */
+        return _("%lldm").printf (minutes);
     }
 }

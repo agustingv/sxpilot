@@ -107,6 +107,21 @@ Preferences → Monitoring Extensions opens it and reloads the files.
 The commands run as the SSH user. Give services their credentials on the
 server, e.g. in `~/.my.cnf` or `~/.pgpass`, never in the command.
 
+## Translations
+
+SxPilot is translated with gettext. The catalogs are in `po/`, and the app
+currently ships a Spanish translation (`po/es.po`). After changing
+user-visible strings:
+
+```sh
+python3 po/extension-strings.py     # only if a bundled extension changed
+ninja -C build sxpilot-pot          # regenerate po/sxpilot.pot
+ninja -C build sxpilot-update-po    # merge it into every po/*.po
+```
+
+To add a language, add its code to `po/LINGUAS` and create the file with
+`msginit -i po/sxpilot.pot -l <code> -o po/<code>.po`.
+
 ## Building
 
 Dependencies (Debian/Ubuntu package names):

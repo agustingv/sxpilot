@@ -9,11 +9,11 @@ namespace SxPilot {
 
         public string to_label () {
             switch (this) {
-                case CONNECTING: return "Connecting";
-                case ONLINE: return "Online";
-                case OFFLINE: return "Offline";
-                case ERROR: return "Error";
-                default: return "Not monitored";
+                case CONNECTING: return _("Connecting");
+                case ONLINE: return _("Online");
+                case OFFLINE: return _("Offline");
+                case ERROR: return _("Error");
+                default: return _("Not monitored");
             }
         }
     }
@@ -100,11 +100,11 @@ namespace SxPilot {
                 var lines = text.strip ().split ("\n");
                 var last = lines.length > 0 ? lines[lines.length - 1].strip () : "";
                 if (rc == 124) {
-                    message = "The command timed out";
+                    message = _("The command timed out");
                 } else if (last != "") {
                     message = last;
                 } else {
-                    message = "The command failed (exit code %d)".printf (rc);
+                    message = _("The command failed (exit code %d)").printf (rc);
                 }
                 return;
             }
@@ -114,7 +114,7 @@ namespace SxPilot {
                 raw = extension.parse (text);
             } catch (Error e) {
                 failed = true;
-                message = "Could not read the output: %s".printf (e.message);
+                message = _("Could not read the output: %s").printf (e.message);
                 return;
             }
 
@@ -161,7 +161,7 @@ namespace SxPilot {
 
             if (found == 0) {
                 failed = true;
-                message = "None of the expected values were found in the output";
+                message = _("None of the expected values were found in the output");
                 return;
             }
             failed = false;
@@ -429,7 +429,7 @@ done
                     return;
                 }
                 if (!saved) {
-                    fail (MonitorState.ERROR, "Save the password in the connection to monitor this server", false);
+                    fail (MonitorState.ERROR, _("Save the password in the connection to monitor this server"), false);
                     return;
                 }
             }
@@ -444,7 +444,7 @@ done
             try {
                 argv = connection.build_batch_argv (password_saved, "sh -s");
             } catch (ShellError e) {
-                fail (MonitorState.ERROR, "Invalid extra options: %s".printf (e.message), false);
+                fail (MonitorState.ERROR, _("Invalid extra options: %s").printf (e.message), false);
                 return;
             }
 
@@ -457,7 +457,7 @@ done
                 launcher.set_cwd (Environment.get_home_dir ());
                 proc = launcher.spawnv (argv);
             } catch (Error e) {
-                fail (MonitorState.ERROR, "Could not start ssh: %s".printf (e.message), false);
+                fail (MonitorState.ERROR, _("Could not start ssh: %s").printf (e.message), false);
                 return;
             }
             process = proc;
@@ -532,13 +532,13 @@ done
             var last = lines.length > 0 ? lines[lines.length - 1] : "";
 
             if (proc.get_if_exited () && proc.get_exit_status () == 3 && os.has_prefix ("unsupported")) {
-                fail (MonitorState.ERROR, "Only Linux servers can be monitored (this one runs %s)"
+                fail (MonitorState.ERROR, _("Only Linux servers can be monitored (this one runs %s)")
                       .printf (os.substring ("unsupported ".length)), false);
                 return;
             }
 
             if (!proc.get_if_exited () || proc.get_exit_status () != 255) {
-                fail (MonitorState.OFFLINE, last != "" ? last : "The monitoring session ended", true);
+                fail (MonitorState.OFFLINE, last != "" ? last : _("The monitoring session ended"), true);
                 return;
             }
 
@@ -546,12 +546,11 @@ done
              * our address banned (fail2ban), and they won't fix themselves. */
             var e = errors.down ();
             if (e.contains ("permission denied") || e.contains ("too many authentication failures")) {
-                fail (MonitorState.ERROR, "Authentication failed. Monitoring needs the SSH agent, "
-                      + "a key without passphrase or a saved password", false);
+                fail (MonitorState.ERROR, _("Authentication failed. Monitoring needs the SSH agent, a key without passphrase or a saved password"), false);
             } else if (e.contains ("host key verification failed")) {
-                fail (MonitorState.ERROR, "Unknown or changed host key. Open an SSH session once to verify it", false);
+                fail (MonitorState.ERROR, _("Unknown or changed host key. Open an SSH session once to verify it"), false);
             } else {
-                fail (MonitorState.OFFLINE, last != "" ? last : "Connection failed", true);
+                fail (MonitorState.OFFLINE, last != "" ? last : _("Connection failed"), true);
             }
         }
 
@@ -714,15 +713,15 @@ done
                 case MonitorState.ONLINE:
                     string[] parts = {};
                     if (cpu_percent >= 0) {
-                        parts += "CPU %.0f%%".printf (cpu_percent);
+                        parts += _("CPU %.0f%%").printf (cpu_percent);
                     }
                     if (mem_percent >= 0) {
-                        parts += "RAM %.0f%%".printf (mem_percent);
+                        parts += _("RAM %.0f%%").printf (mem_percent);
                     }
                     if (load1 >= 0) {
-                        parts += "Load %.2f".printf (load1);
+                        parts += _("Load %.2f").printf (load1);
                     }
-                    return parts.length > 0 ? "%s — %s".printf (name, string.joinv (" · ", parts)) : "%s — Online".printf (name);
+                    return parts.length > 0 ? "%s — %s".printf (name, string.joinv (" · ", parts)) : _("%s — Online").printf (name);
                 case MonitorState.OFFLINE:
                 case MonitorState.ERROR:
                     return "%s — %s: %s".printf (name, state.to_label (), message);
@@ -891,8 +890,8 @@ done
             }
             var n = new Notification (raised
                 ? "%s: %s".printf (m.connection.display_name, a.title)
-                : "%s: back to normal".printf (m.connection.display_name));
-            n.set_body (raised ? a.detail : "Resolved: %s".printf (a.title));
+                : _("%s: back to normal").printf (m.connection.display_name));
+            n.set_body (raised ? a.detail : _("Resolved: %s").printf (a.title));
             n.set_priority (raised ? NotificationPriority.HIGH : NotificationPriority.NORMAL);
             n.set_default_action_and_target_value ("app.show-monitor", new Variant.string (m.connection.id));
             /* Same id: the resolution replaces the alert in the shell. */

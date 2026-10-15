@@ -32,13 +32,13 @@ namespace SxPilot {
 
             /* Sidebar */
             var add_menu = new Menu ();
-            add_menu.append ("New _Connection…", "win.new-connection");
-            add_menu.append ("New _Group…", "win.new-group");
-            add_menu.append ("_Quick Connect…", "win.quick-connect");
+            add_menu.append (_("New _Connection…"), "win.new-connection");
+            add_menu.append (_("New _Group…"), "win.new-group");
+            add_menu.append (_("_Quick Connect…"), "win.quick-connect");
 
             var add_button = new Gtk.MenuButton ();
             add_button.icon_name = "list-add-symbolic";
-            add_button.tooltip_text = "Add";
+            add_button.tooltip_text = _("Add");
             add_button.menu_model = add_menu;
 
             var sidebar_header = new Adw.HeaderBar ();
@@ -66,8 +66,8 @@ namespace SxPilot {
 
             var empty = new Adw.StatusPage ();
             empty.icon_name = "utilities-terminal-symbolic";
-            empty.title = "No Open Sessions";
-            empty.description = "Choose a connection in the sidebar to open an SSH session, or the folder button for SFTP";
+            empty.title = _("No Open Sessions");
+            empty.description = _("Choose a connection in the sidebar to open an SSH session, or the folder button for SFTP");
 
             content_stack = new Gtk.Stack ();
             content_stack.transition_type = Gtk.StackTransitionType.CROSSFADE;
@@ -79,17 +79,17 @@ namespace SxPilot {
 
             var sidebar_toggle = new Gtk.ToggleButton ();
             sidebar_toggle.icon_name = "sidebar-show-symbolic";
-            sidebar_toggle.tooltip_text = "Toggle Sidebar";
+            sidebar_toggle.tooltip_text = _("Toggle Sidebar");
 
             var main_menu = new Menu ();
             var section = new Menu ();
-            section.append ("_Preferences", "app.preferences");
-            section.append ("_About SxPilot", "app.about");
+            section.append (_("_Preferences"), "app.preferences");
+            section.append (_("_About SxPilot"), "app.about");
             main_menu.append_section (null, section);
 
             var menu_button = new Gtk.MenuButton ();
             menu_button.icon_name = "open-menu-symbolic";
-            menu_button.tooltip_text = "Main Menu";
+            menu_button.tooltip_text = _("Main Menu");
             menu_button.primary = true;
             menu_button.menu_model = main_menu;
 
@@ -234,13 +234,13 @@ namespace SxPilot {
         private MenuModel build_tab_menu () {
             var menu = new Menu ();
             var s1 = new Menu ();
-            s1.append ("_Duplicate Tab", "tab.duplicate");
-            s1.append ("Open S_FTP Session", "tab.sftp");
-            s1.append ("_Reconnect", "tab.reconnect");
-            s1.append ("_Edit Connection…", "tab.edit");
+            s1.append (_("_Duplicate Tab"), "tab.duplicate");
+            s1.append (_("Open S_FTP Session"), "tab.sftp");
+            s1.append (_("_Reconnect"), "tab.reconnect");
+            s1.append (_("_Edit Connection…"), "tab.edit");
             menu.append_section (null, s1);
             var s2 = new Menu ();
-            s2.append ("_Close", "tab.close");
+            s2.append (_("_Close"), "tab.close");
             menu.append_section (null, s2);
             return menu;
         }
@@ -309,7 +309,7 @@ namespace SxPilot {
             var tab = new MonitorTab (connection);
             var page = tab_view.append (tab);
             tab.bind_property ("title", page, "title", BindingFlags.SYNC_CREATE);
-            page.tooltip = "%s — Monitor".printf (connection.summary);
+            page.tooltip = _("%s — Monitor").printf (connection.summary);
             page.icon = new ThemedIcon ("power-profile-performance-symbolic");
             page.live_thumbnail = false;
             /* Through the tab: the monitor may outlive it. */
@@ -341,7 +341,7 @@ namespace SxPilot {
                 page.indicator_tooltip = tab.monitor.message;
             } else if (alerts > 0) {
                 page.indicator_icon = new ThemedIcon ("dialog-warning-symbolic");
-                page.indicator_tooltip = alerts == 1 ? "1 active alert" : "%u active alerts".printf (alerts);
+                page.indicator_tooltip = ngettext ("%u active alert", "%u active alerts", alerts).printf (alerts);
             } else {
                 page.indicator_icon = null;
                 page.indicator_tooltip = "";
@@ -354,7 +354,7 @@ namespace SxPilot {
 
         private void update_page_state (Adw.TabPage page, TerminalTab tab) {
             page.indicator_icon = tab.running ? null : new ThemedIcon ("network-offline-symbolic");
-            page.indicator_tooltip = tab.running ? "" : "Disconnected";
+            page.indicator_tooltip = tab.running ? "" : _("Disconnected");
             if (page == tab_view.selected_page) {
                 update_title ();
             }
@@ -395,7 +395,7 @@ namespace SxPilot {
             window_title.title = tab.title;
             window_title.subtitle = tab.running
                 ? "%s · %s".printf (tab.protocol.to_label (), tab.connection.summary)
-                : "Disconnected · %s".printf (tab.connection.summary);
+                : _("Disconnected · %s").printf (tab.connection.summary);
             title = "%s — SxPilot".printf (tab.title);
         }
 
@@ -421,10 +421,10 @@ namespace SxPilot {
                 return Gdk.EVENT_STOP;
             }
 
-            var dialog = new Adw.AlertDialog ("Close Session?",
-                "The connection to “%s” is still active and will be terminated.".printf (tab.connection.summary));
-            dialog.add_response ("cancel", "_Cancel");
-            dialog.add_response ("close", "C_lose");
+            var dialog = new Adw.AlertDialog (_("Close Session?"),
+                _("The connection to “%s” is still active and will be terminated.").printf (tab.connection.summary));
+            dialog.add_response ("cancel", _("_Cancel"));
+            dialog.add_response ("close", _("C_lose"));
             dialog.set_response_appearance ("close", Adw.ResponseAppearance.DESTRUCTIVE);
             dialog.default_response = "close";
             dialog.close_response = "cancel";
@@ -456,11 +456,11 @@ namespace SxPilot {
                 terminate_all ();
                 return false;
             }
-            var dialog = new Adw.AlertDialog ("Quit SxPilot?",
-                n == 1 ? "There is 1 active session that will be terminated."
-                       : "There are %d active sessions that will be terminated.".printf (n));
-            dialog.add_response ("cancel", "_Cancel");
-            dialog.add_response ("quit", "_Quit");
+            var dialog = new Adw.AlertDialog (_("Quit SxPilot?"),
+                ngettext ("There is %d active session that will be terminated.",
+                          "There are %d active sessions that will be terminated.", n).printf (n));
+            dialog.add_response ("cancel", _("_Cancel"));
+            dialog.add_response ("quit", _("_Quit"));
             dialog.set_response_appearance ("quit", Adw.ResponseAppearance.DESTRUCTIVE);
             dialog.close_response = "cancel";
             dialog.choose.begin (this, null, (obj, res) => {
@@ -496,7 +496,7 @@ namespace SxPilot {
         private void show_connection_dialog (Connection? connection, string? group_id) {
             var dialog = new ConnectionDialog (connection, group_id);
             dialog.saved.connect ((c) => {
-                toasts.add_toast (new Adw.Toast ("“%s” saved".printf (c.display_name)));
+                toasts.add_toast (new Adw.Toast (_("“%s” saved").printf (c.display_name)));
                 /* Open tabs keep the same object; refresh their headers. */
                 update_title ();
             });
@@ -538,10 +538,10 @@ namespace SxPilot {
             if (c == null) {
                 return;
             }
-            var dialog = new Adw.AlertDialog ("Delete Connection?",
-                "“%s” and its saved password will be permanently deleted.".printf (c.display_name));
-            dialog.add_response ("cancel", "_Cancel");
-            dialog.add_response ("delete", "_Delete");
+            var dialog = new Adw.AlertDialog (_("Delete Connection?"),
+                _("“%s” and its saved password will be permanently deleted.").printf (c.display_name));
+            dialog.add_response ("cancel", _("_Cancel"));
+            dialog.add_response ("delete", _("_Delete"));
             dialog.set_response_appearance ("delete", Adw.ResponseAppearance.DESTRUCTIVE);
             dialog.close_response = "cancel";
             dialog.choose.begin (this, null, (obj, res) => {
@@ -562,21 +562,21 @@ namespace SxPilot {
                     quoted += Shell.quote (a);
                 }
                 get_clipboard ().set_text (string.joinv (" ", quoted));
-                toasts.add_toast (new Adw.Toast ("Command copied"));
+                toasts.add_toast (new Adw.Toast (_("Command copied")));
             } catch (ShellError e) {
-                toasts.add_toast (new Adw.Toast ("Invalid extra options"));
+                toasts.add_toast (new Adw.Toast (_("Invalid extra options")));
             }
         }
 
         private void show_group_dialog (Group? group) {
-            var dialog = new Adw.AlertDialog (group == null ? "New Group" : "Rename Group", null);
+            var dialog = new Adw.AlertDialog (group == null ? _("New Group") : _("Rename Group"), null);
             var entry = new Gtk.Entry ();
-            entry.placeholder_text = "Group name";
+            entry.placeholder_text = _("Group name");
             entry.activates_default = true;
             entry.text = group != null ? group.name : "";
             dialog.extra_child = entry;
-            dialog.add_response ("cancel", "_Cancel");
-            dialog.add_response ("ok", group == null ? "_Create" : "_Rename");
+            dialog.add_response ("cancel", _("_Cancel"));
+            dialog.add_response ("ok", group == null ? _("_Create") : _("_Rename"));
             dialog.set_response_appearance ("ok", Adw.ResponseAppearance.SUGGESTED);
             dialog.default_response = "ok";
             dialog.close_response = "cancel";
@@ -603,10 +603,10 @@ namespace SxPilot {
             if (g == null) {
                 return;
             }
-            var dialog = new Adw.AlertDialog ("Delete Group?",
-                "The group “%s” will be deleted. Its connections will be kept as ungrouped.".printf (g.name));
-            dialog.add_response ("cancel", "_Cancel");
-            dialog.add_response ("delete", "_Delete");
+            var dialog = new Adw.AlertDialog (_("Delete Group?"),
+                _("The group “%s” will be deleted. Its connections will be kept as ungrouped.").printf (g.name));
+            dialog.add_response ("cancel", _("_Cancel"));
+            dialog.add_response ("delete", _("_Delete"));
             dialog.set_response_appearance ("delete", Adw.ResponseAppearance.DESTRUCTIVE);
             dialog.close_response = "cancel";
             dialog.choose.begin (this, null, (obj, res) => {
@@ -642,14 +642,14 @@ namespace SxPilot {
         }
 
         private void show_quick_connect () {
-            var dialog = new Adw.AlertDialog ("Quick Connect", "Connect without saving. Use [user@]host[:port].");
+            var dialog = new Adw.AlertDialog (_("Quick Connect"), _("Connect without saving. Use [user@]host[:port]."));
             var entry = new Gtk.Entry ();
             entry.placeholder_text = "user@example.com:22";
             entry.activates_default = true;
             dialog.extra_child = entry;
-            dialog.add_response ("cancel", "_Cancel");
-            dialog.add_response ("sftp", "S_FTP");
-            dialog.add_response ("ssh", "_SSH");
+            dialog.add_response ("cancel", _("_Cancel"));
+            dialog.add_response ("sftp", _("S_FTP"));
+            dialog.add_response ("ssh", _("_SSH"));
             dialog.set_response_appearance ("ssh", Adw.ResponseAppearance.SUGGESTED);
             dialog.default_response = "ssh";
             dialog.close_response = "cancel";

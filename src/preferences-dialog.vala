@@ -5,14 +5,14 @@ namespace SxPilot {
             var settings = new Settings (Config.APP_ID);
 
             var page = new Adw.PreferencesPage ();
-            page.title = "General";
+            page.title = _("General");
             page.icon_name = "utilities-terminal-symbolic";
 
             var group = new Adw.PreferencesGroup ();
-            group.title = "Terminal";
+            group.title = _("Terminal");
 
             var font_row = new Adw.ActionRow ();
-            font_row.title = "Font";
+            font_row.title = _("Font");
             var font_button = new Gtk.FontDialogButton (new Gtk.FontDialog ());
             font_button.valign = Gtk.Align.CENTER;
             font_button.level = Gtk.FontLevel.FONT;
@@ -26,44 +26,44 @@ namespace SxPilot {
             group.add (font_row);
 
             var scrollback = new Adw.SpinRow.with_range (100, 1000000, 1000);
-            scrollback.title = "Scrollback Lines";
+            scrollback.title = _("Scrollback Lines");
             settings.bind ("terminal-scrollback", scrollback, "value", SettingsBindFlags.DEFAULT);
             group.add (scrollback);
 
             page.add (group);
 
             var monitoring = new Adw.PreferencesGroup ();
-            monitoring.title = "Monitoring";
+            monitoring.title = _("Monitoring");
 
             var interval = new Adw.SpinRow.with_range (2, 300, 1);
-            interval.title = "Update Interval";
-            interval.subtitle = "Seconds between samples of monitored servers";
+            interval.title = _("Update Interval");
+            interval.subtitle = _("Seconds between samples of monitored servers");
             settings.bind ("monitor-interval", interval, "value", SettingsBindFlags.DEFAULT);
             monitoring.add (interval);
 
             page.add (monitoring);
 
             var alerts = new Adw.PreferencesGroup ();
-            alerts.title = "Alerts";
-            alerts.description = "Desktop notifications for monitored servers. A threshold of 0 disables that alert.";
+            alerts.title = _("Alerts");
+            alerts.description = _("Desktop notifications for monitored servers. A threshold of 0 disables that alert.");
 
             var enabled = new Adw.SwitchRow ();
-            enabled.title = "Enable Alerts";
+            enabled.title = _("Enable Alerts");
             settings.bind ("alerts-enabled", enabled, "active", SettingsBindFlags.DEFAULT);
             alerts.add (enabled);
 
             var offline = new Adw.SwitchRow ();
-            offline.title = "Server Unreachable";
+            offline.title = _("Server Unreachable");
             settings.bind ("alert-offline", offline, "active", SettingsBindFlags.DEFAULT);
             alerts.add (offline);
 
-            alerts.add (threshold_row (settings, "alert-cpu", "CPU Usage Above"));
-            alerts.add (threshold_row (settings, "alert-memory", "Memory Usage Above"));
-            alerts.add (threshold_row (settings, "alert-disk", "Disk Usage Above"));
+            alerts.add (threshold_row (settings, "alert-cpu", _("CPU Usage Above")));
+            alerts.add (threshold_row (settings, "alert-memory", _("Memory Usage Above")));
+            alerts.add (threshold_row (settings, "alert-disk", _("Disk Usage Above")));
 
             var minutes = new Adw.SpinRow.with_range (0, 60, 1);
-            minutes.title = "Minimum Duration";
-            minutes.subtitle = "Minutes a condition must last before alerting";
+            minutes.title = _("Minimum Duration");
+            minutes.subtitle = _("Minutes a condition must last before alerting");
             settings.bind ("alert-minutes", minutes, "value", SettingsBindFlags.DEFAULT);
             alerts.add (minutes);
 
@@ -76,25 +76,26 @@ namespace SxPilot {
             page.add (alerts);
 
             extensions_group = new Adw.PreferencesGroup ();
-            extensions_group.title = "Monitoring Extensions";
-            extensions_group.description = "Add your own as JSON files in %s. Enable them in each connection."
+            extensions_group.title = _("Monitoring Extensions");
+            extensions_group.description = _("Add your own as JSON files in %s. Enable them in each connection.")
                 .printf (Markup.escape_text (ExtensionRegistry.user_dir ()));
 
             var buttons = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 6);
             var open_folder = new Gtk.Button.from_icon_name ("folder-open-symbolic");
-            open_folder.tooltip_text = "Open Extensions Folder";
+            open_folder.tooltip_text = _("Open Extensions Folder");
             open_folder.add_css_class ("flat");
             open_folder.clicked.connect (open_extensions_folder);
             buttons.append (open_folder);
             var reload = new Gtk.Button.from_icon_name ("view-refresh-symbolic");
-            reload.tooltip_text = "Reload Extensions";
+            reload.tooltip_text = _("Reload Extensions");
             reload.add_css_class ("flat");
             reload.clicked.connect (() => {
                 ExtensionRegistry.get_default ().load ();
                 /* Restarts the monitors whose extensions changed. */
                 MonitorManager.get_default ().sync ();
                 fill_extensions ();
-                add_toast (new Adw.Toast ("%u extensions loaded".printf (ExtensionRegistry.get_default ().extensions.length)));
+                var loaded = ExtensionRegistry.get_default ().extensions.length;
+                add_toast (new Adw.Toast (ngettext ("%u extension loaded", "%u extensions loaded", loaded).printf (loaded)));
             });
             buttons.append (reload);
             extensions_group.header_suffix = buttons;
@@ -109,7 +110,7 @@ namespace SxPilot {
         private Adw.SpinRow threshold_row (Settings settings, string key, string title) {
             var row = new Adw.SpinRow.with_range (0, 100, 5);
             row.title = title;
-            row.subtitle = "Percent";
+            row.subtitle = _("Percent");
             settings.bind (key, row, "value", SettingsBindFlags.DEFAULT);
             threshold_rows.add (row);
             return row;
@@ -127,7 +128,7 @@ namespace SxPilot {
             var registry = ExtensionRegistry.get_default ();
             if (registry.extensions.length == 0) {
                 var empty = new Adw.ActionRow ();
-                empty.title = "No extensions installed";
+                empty.title = _("No extensions installed");
                 empty.add_css_class ("dim-label");
                 extensions_group.add (empty);
                 extension_rows.add (empty);
@@ -152,7 +153,7 @@ namespace SxPilot {
                 try {
                     launcher.launch.end (res);
                 } catch (Error e) {
-                    add_toast (new Adw.Toast ("Could not open the folder"));
+                    add_toast (new Adw.Toast (_("Could not open the folder")));
                 }
             });
         }

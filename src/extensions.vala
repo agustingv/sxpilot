@@ -99,6 +99,12 @@ namespace SxPilot {
             return Regex.match_simple ("^[a-z0-9][a-z0-9_-]{0,63}$", id);
         }
 
+        /* Bundled extensions' texts are in the translation catalog (see
+         * po/extension-strings.py); others come back unchanged. */
+        private static string tr (string s) {
+            return s != "" ? _(s) : s;
+        }
+
         private static string required_string (Json.Object o, string member) throws ExtensionError {
             var v = o.get_string_member_with_default (member, "").strip ();
             if (v == "") {
@@ -114,9 +120,9 @@ namespace SxPilot {
             if (!is_valid_id (e.id)) {
                 throw new ExtensionError.INVALID ("invalid id “%s” (use a-z, 0-9, - and _)", e.id);
             }
-            e.name = required_string (o, "name");
-            e.description = o.get_string_member_with_default ("description", "");
-            e.hint = o.get_string_member_with_default ("hint", "");
+            e.name = tr (required_string (o, "name"));
+            e.description = tr (o.get_string_member_with_default ("description", ""));
+            e.hint = tr (o.get_string_member_with_default ("hint", ""));
             e.command = required_string (o, "command");
             e.detect = o.get_string_member_with_default ("detect", "").strip ();
 
@@ -128,7 +134,7 @@ namespace SxPilot {
                     if (!Regex.match_simple ("^[a-z_][a-z0-9_]*$", p.key)) {
                         throw new ExtensionError.INVALID ("invalid param key “%s”", p.key);
                     }
-                    p.label = po.get_string_member_with_default ("label", p.key);
+                    p.label = tr (po.get_string_member_with_default ("label", p.key));
                     p.default_value = po.get_string_member_with_default ("default", "");
                     e.params.add (p);
                 }
@@ -173,7 +179,7 @@ namespace SxPilot {
                 var mo = node.get_object ();
                 var m = new ExtensionMetric ();
                 m.key = required_string (mo, "key");
-                m.label = mo.get_string_member_with_default ("label", m.key);
+                m.label = tr (mo.get_string_member_with_default ("label", m.key));
                 m.unit = mo.get_string_member_with_default ("unit", "");
                 m.format = MetricFormat.from_string (mo.get_string_member_with_default ("format", "number"));
                 m.rate = mo.get_boolean_member_with_default ("rate", false);
@@ -192,7 +198,7 @@ namespace SxPilot {
                     if (!m.has_alert) {
                         throw new ExtensionError.INVALID ("alert for “%s” needs “above” or “below”", m.key);
                     }
-                    m.alert_message = ao.get_string_member_with_default ("message", "");
+                    m.alert_message = tr (ao.get_string_member_with_default ("message", ""));
                 }
                 e.metrics.add (m);
             }

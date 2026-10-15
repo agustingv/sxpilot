@@ -15,7 +15,8 @@ static bool is_confirmation (string prompt) {
 
 int main (string[] args) {
     Intl.setlocale (LocaleCategory.ALL, "");
-    var prompt = args.length > 1 ? args[1] : "Password:";
+    SxPilot.setup_gettext ();
+    var prompt = args.length > 1 ? args[1] : _("Password:");
     var connection_id = Environment.get_variable ("SXPILOT_CONNECTION_ID");
 
     if (connection_id != null && is_password_prompt (prompt)) {
@@ -64,8 +65,8 @@ static int run_dialog (string prompt) {
         entry.activates_default = true;
         entry.visible = !confirm;
 
-        var cancel = new Gtk.Button.with_mnemonic ("_Cancel");
-        var ok = new Gtk.Button.with_mnemonic (confirm ? "_Accept" : "_OK");
+        var cancel = new Gtk.Button.with_mnemonic (_("_Cancel"));
+        var ok = new Gtk.Button.with_mnemonic (confirm ? _("_Accept") : _("_OK"));
         ok.add_css_class ("suggested-action");
         window.default_widget = ok;
 
