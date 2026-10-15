@@ -1,0 +1,24 @@
+{
+  "id": "redis",
+  "name": "Redis / Valkey",
+  "description": "Clients, memory and operations from INFO",
+  "hint": "Needs redis-cli on the server. If Redis requires a password, export REDISCLI_AUTH in the SSH user's environment.",
+  "detect": "grep -qsxE 'redis-server|valkey-server' /proc/[0-9]*/comm",
+  "params": [
+    {"key": "host", "label": "Host", "default": "127.0.0.1"},
+    {"key": "port", "label": "Port", "default": "6379"}
+  ],
+  "command": "redis-cli -h ${host} -p ${port} INFO",
+  "parser": {"type": "keyvalue", "separator": ":"},
+  "metrics": [
+    {"key": "connected_clients", "label": "Clients", "chart": true},
+    {"key": "instance_ops_per_sec", "label": "Operations", "unit": "ops/s", "chart": true},
+    {"key": "used_memory", "label": "Memory", "format": "bytes"},
+    {"key": "keyspace_hits", "label": "Hits", "rate": true},
+    {"key": "keyspace_misses", "label": "Misses", "rate": true},
+    {"key": "rejected_connections", "label": "Rejected connections", "rate": true, "alert": {"above": 0, "message": "Redis is rejecting connections"}},
+    {"key": "evicted_keys", "label": "Evicted keys"},
+    {"key": "uptime_in_seconds", "label": "Uptime", "format": "duration"},
+    {"key": "redis_version", "label": "Version", "format": "text"}
+  ]
+}

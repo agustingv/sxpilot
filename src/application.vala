@@ -15,6 +15,19 @@ namespace SxPilot {
             };
             add_action_entries (entries, this);
 
+            /* Target of alert notifications. */
+            var show_monitor = new SimpleAction ("show-monitor", VariantType.STRING);
+            show_monitor.activate.connect ((a, param) => {
+                var c = Store.get_default ().find_connection (param.get_string ());
+                if (c == null) {
+                    return;
+                }
+                var win = (active_window as Window) ?? new Window (this);
+                win.open_monitor (c);
+                win.present ();
+            });
+            add_action (show_monitor);
+
             set_accels_for_action ("app.quit", { "<Control><Shift>q" });
             set_accels_for_action ("app.new-window", { "<Control><Shift>n" });
             set_accels_for_action ("app.preferences", { "<Control>comma" });
@@ -28,6 +41,37 @@ namespace SxPilot {
             set_accels_for_action ("win.duplicate-tab", { "<Control><Shift>t" });
             set_accels_for_action ("win.open-sftp-here", { "<Control><Shift>s" });
             set_accels_for_action ("win.toggle-sidebar", { "F9" });
+        }
+
+        protected override void startup () {
+            base.startup ();
+
+            var css = new Gtk.CssProvider ();
+            css.load_from_string ("""
+                .status-dot {
+                    min-width: 8px;
+                    min-height: 8px;
+                    border-radius: 9999px;
+                    margin: -2px;
+                    background-color: @window_fg_color;
+                    opacity: 0.4;
+                    box-shadow: 0 0 0 2px @card_bg_color;
+                }
+                .status-dot.online { background-color: @success_color; opacity: 1; }
+                .status-dot.offline { background-color: @error_color; opacity: 1; }
+                .status-dot.error { background-color: @warning_color; opacity: 1; }
+                .status-dot.alert { background-color: @warning_color; opacity: 1; }
+            """);
+            Gtk.StyleContext.add_provider_for_display (Gdk.Display.get_default (), css,
+                                                       Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+            /* Start background monitors before any window lists them. */
+            MonitorManager.get_default ();
+        }
+
+        protected override void shutdown () {
+            MonitorManager.get_default ().stop_all ();
+            base.shutdown ();
         }
 
         protected override void activate () {

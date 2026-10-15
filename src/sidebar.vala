@@ -192,7 +192,7 @@ namespace SxPilot {
             row.activatable = true;
             row.set_action_name ("win.connect-ssh");
             row.set_action_target_value (new Variant.string (c.id));
-            row.add_prefix (new Gtk.Image.from_icon_name ("network-server-symbolic"));
+            row.add_prefix (new ServerIcon (c.id));
 
             var sftp = new Gtk.Button.from_icon_name ("folder-remote-symbolic");
             sftp.valign = Gtk.Align.CENTER;
@@ -206,6 +206,7 @@ namespace SxPilot {
             var open = new Menu ();
             open.append_item (target_item ("Open _SSH", "win.connect-ssh", c.id));
             open.append_item (target_item ("Open S_FTP", "win.connect-sftp", c.id));
+            open.append_item (target_item ("Show _Monitor", "win.show-monitor", c.id));
             menu.append_section (null, open);
             var edit = new Menu ();
             edit.append_item (target_item ("_Edit…", "win.edit-connection", c.id));

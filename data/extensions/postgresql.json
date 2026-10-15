@@ -1,0 +1,21 @@
+{
+  "id": "postgresql",
+  "name": "PostgreSQL",
+  "description": "Connections, transactions and database size",
+  "hint": "Runs psql as the SSH user. The role must be able to log in without a prompt: peer authentication, or a password in ~/.pgpass on the server (mode 600).",
+  "detect": "grep -qsx postgres /proc/[0-9]*/comm",
+  "params": [
+    {"key": "user", "label": "Role", "default": "postgres"},
+    {"key": "database", "label": "Database", "default": "postgres"}
+  ],
+  "command": "psql -XAtq -F ' ' -U ${user} -d ${database} -c \"SELECT 'connections', count(*) FROM pg_stat_activity WHERE backend_type = 'client backend' UNION ALL SELECT 'active', count(*) FROM pg_stat_activity WHERE state = 'active' UNION ALL SELECT 'max_connections', setting::bigint FROM pg_settings WHERE name = 'max_connections' UNION ALL SELECT 'commits', sum(xact_commit) FROM pg_stat_database UNION ALL SELECT 'rollbacks', sum(xact_rollback) FROM pg_stat_database UNION ALL SELECT 'size', sum(pg_database_size(datname)) FROM pg_database\"",
+  "parser": {"type": "table", "key_column": 0, "value_column": 1},
+  "metrics": [
+    {"key": "connections", "label": "Connections", "chart": true},
+    {"key": "active", "label": "Active queries"},
+    {"key": "max_connections", "label": "Max connections"},
+    {"key": "commits", "label": "Commits", "unit": "tx", "rate": true, "chart": true},
+    {"key": "rollbacks", "label": "Rollbacks", "unit": "tx", "rate": true},
+    {"key": "size", "label": "Size of all databases", "format": "bytes"}
+  ]
+}

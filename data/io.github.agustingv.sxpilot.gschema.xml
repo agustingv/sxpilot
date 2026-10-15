@@ -21,5 +21,40 @@
       <default>10000</default>
       <summary>Terminal scrollback lines</summary>
     </key>
+    <key name="monitor-interval" type="i">
+      <range min="2" max="300"/>
+      <default>5</default>
+      <summary>Monitoring interval</summary>
+      <description>Seconds between two samples of a monitored server</description>
+    </key>
+    <key name="alerts-enabled" type="b">
+      <default>true</default>
+      <summary>Alerts</summary>
+      <description>Notify when a monitored server crosses a threshold or goes offline</description>
+    </key>
+    <key name="alert-cpu" type="i">
+      <range min="0" max="100"/>
+      <default>90</default>
+      <summary>CPU alert threshold (percent, 0 disables)</summary>
+    </key>
+    <key name="alert-memory" type="i">
+      <range min="0" max="100"/>
+      <default>90</default>
+      <summary>Memory alert threshold (percent, 0 disables)</summary>
+    </key>
+    <key name="alert-disk" type="i">
+      <range min="0" max="100"/>
+      <default>90</default>
+      <summary>Disk alert threshold (percent, 0 disables)</summary>
+    </key>
+    <key name="alert-offline" type="b">
+      <default>true</default>
+      <summary>Alert when a server is unreachable</summary>
+    </key>
+    <key name="alert-minutes" type="i">
+      <range min="0" max="60"/>
+      <default>2</default>
+      <summary>Minutes a condition must last before alerting</summary>
+    </key>
   </schema>
 </schemalist>

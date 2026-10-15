@@ -30,6 +30,8 @@ if appstreamcli.found()
            '--override=url-homepage-missing=info', metainfo_file])
 endif
 
+subdir('extensions')
+
 schema_file = files(app_id + '.gschema.xml')
 install_data(schema_file, install_dir: get_option('datadir') / 'glib-2.0' / 'schemas')
 

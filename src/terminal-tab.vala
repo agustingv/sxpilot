@@ -155,26 +155,6 @@ namespace SxPilot {
                                                        new Gtk.NamedAction (action)));
         }
 
-        private static string? find_askpass () {
-            var env = Environment.get_variable ("SXPILOT_ASKPASS");
-            if (env != null && FileUtils.test (env, FileTest.IS_EXECUTABLE)) {
-                return env;
-            }
-            if (FileUtils.test (Config.ASKPASS_PATH, FileTest.IS_EXECUTABLE)) {
-                return Config.ASKPASS_PATH;
-            }
-            /* Running from the build directory: the helper sits next to us. */
-            try {
-                var self = FileUtils.read_link ("/proc/self/exe");
-                var candidate = Path.build_filename (Path.get_dirname (self), "sxpilot-askpass");
-                if (FileUtils.test (candidate, FileTest.IS_EXECUTABLE)) {
-                    return candidate;
-                }
-            } catch (FileError e) {
-            }
-            return null;
-        }
-
         public void start () {
             if (running) {
                 return;
@@ -185,29 +165,8 @@ namespace SxPilot {
         }
 
         private async void start_async () {
-            string[] env = Environ.get ();
-            bool password_saved = false;
-
-            if (connection.auth_method == AuthMethod.PASSWORD) {
-                string? password = null;
-                try {
-                    password = yield Secrets.lookup_password (connection.id);
-                } catch (Error e) {
-                    warning ("Keyring lookup failed: %s", e.message);
-                }
-                var askpass = find_askpass ();
-                if (password != null && askpass != null) {
-                    /* ssh asks the helper, which reads the password from the
-                     * keyring itself: it never appears in argv or env. */
-                    password_saved = true;
-                    env = Environ.set_variable (env, "SSH_ASKPASS", askpass, true);
-                    env = Environ.set_variable (env, "SSH_ASKPASS_REQUIRE", "force", true);
-                    env = Environ.set_variable (env, "SXPILOT_CONNECTION_ID", connection.id, true);
-                    env = Environ.set_variable (env, "SXPILOT_CONNECTION_NAME", connection.display_name, true);
-                } else if (password != null) {
-                    warning ("sxpilot-askpass not found; the password will be asked in the terminal");
-                }
-            }
+            bool password_saved;
+            var env = yield SshEnv.prepare (connection, false, out password_saved);
 
             string[] argv;
             try {

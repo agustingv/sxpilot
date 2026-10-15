@@ -1,5 +1,12 @@
 namespace SxPilot {
 
+    /* Switch and parameter entries of one extension in the dialog. */
+    private class ExtensionWidgets {
+        public Extension extension;
+        public Gtk.Switch enabled;
+        public HashTable<string, Adw.EntryRow> entries = new HashTable<string, Adw.EntryRow> (str_hash, str_equal);
+    }
+
     /* Create or edit a connection. Emits `saved` once the store is updated. */
     public class ConnectionDialog : Adw.Dialog {
         public Connection? connection { get; construct; }
@@ -17,6 +24,9 @@ namespace SxPilot {
         private Adw.EntryRow jump_row;
         private Adw.EntryRow dir_row;
         private Adw.EntryRow extra_row;
+        private Adw.SwitchRow monitor_row;
+        private Adw.SwitchRow alerts_row;
+        private GenericArray<ExtensionWidgets> extension_widgets = new GenericArray<ExtensionWidgets> ();
         private Gtk.Button save_button;
         private Adw.ToastOverlay toasts;
 
@@ -33,7 +43,7 @@ namespace SxPilot {
         construct {
             title = connection == null ? "New Connection" : "Edit Connection";
             content_width = 480;
-            content_height = 680;
+            content_height = 760;
 
             var header = new Adw.HeaderBar ();
             header.show_start_title_buttons = false;
@@ -134,6 +144,37 @@ namespace SxPilot {
 
             page.add (adv);
 
+            /* Monitoring */
+            var mon = new Adw.PreferencesGroup ();
+            mon.title = "Monitoring";
+            mon.description = "Keeps a background SSH session that reads CPU, memory and disk usage. "
+                + "Nothing is installed on the server. Linux only.";
+
+            monitor_row = new Adw.SwitchRow ();
+            monitor_row.title = "Monitor Server";
+            monitor_row.subtitle = "Needs the SSH agent, a key without passphrase or a saved password";
+            mon.add (monitor_row);
+
+            alerts_row = new Adw.SwitchRow ();
+            alerts_row.title = "Alerts";
+            alerts_row.subtitle = "Notify about thresholds and outages (set in Preferences)";
+            alerts_row.active = true;
+            mon.add (alerts_row);
+
+            page.add (mon);
+
+            var registry = ExtensionRegistry.get_default ();
+            if (registry.extensions.length > 0) {
+                var exts = new Adw.PreferencesGroup ();
+                exts.title = "Monitoring Extensions";
+                exts.description = "Each enabled extension runs its command on the server on every sample "
+                    + "while the server is monitored. Review the command before enabling it.";
+                foreach (var ext in registry.extensions) {
+                    exts.add (build_extension_row (ext));
+                }
+                page.add (exts);
+            }
+
             toasts = new Adw.ToastOverlay ();
             toasts.child = page;
 
@@ -166,6 +207,21 @@ namespace SxPilot {
             jump_row.text = c.jump_host;
             dir_row.text = c.remote_directory;
             extra_row.text = c.extra_options;
+            monitor_row.active = c.monitor_enabled;
+            alerts_row.active = c.alerts_enabled;
+            foreach (var w in extension_widgets) {
+                var cfg = c.extensions.lookup (w.extension.id);
+                if (cfg == null) {
+                    continue;
+                }
+                w.enabled.active = cfg.enabled;
+                foreach (var key in w.entries.get_keys ()) {
+                    var v = cfg.params.lookup (key);
+                    if (v != null && v != "") {
+                        w.entries.lookup (key).text = v;
+                    }
+                }
+            }
 
             if (c.auth_method == AuthMethod.PASSWORD) {
                 Secrets.lookup_password.begin (c.id, (obj, res) => {
@@ -178,6 +234,93 @@ namespace SxPilot {
                         warning ("Keyring lookup failed: %s", e.message);
                     }
                 });
+            }
+        }
+
+        private Gtk.Widget build_extension_row (Extension ext) {
+            var w = new ExtensionWidgets ();
+            w.extension = ext;
+
+            var row = new Adw.ExpanderRow ();
+            row.title = Markup.escape_text (ext.name);
+            row.subtitle = Markup.escape_text (ext.description);
+
+            /* Found by a running monitor of this connection. */
+            var monitor = connection != null ? MonitorManager.get_default ().lookup (connection.id) : null;
+            if (monitor != null) {
+                foreach (var d in monitor.detected) {
+                    if (d.id == ext.id) {
+                        var tag = new Gtk.Label ("Detected");
+                        tag.valign = Gtk.Align.CENTER;
+                        tag.add_css_class ("caption");
+                        tag.add_css_class ("accent");
+                        row.add_suffix (tag);
+                        break;
+                    }
+                }
+            }
+
+            w.enabled = new Gtk.Switch ();
+            w.enabled.valign = Gtk.Align.CENTER;
+            w.enabled.tooltip_text = "Enable %s".printf (ext.name);
+            row.add_suffix (w.enabled);
+
+            foreach (var p in ext.params) {
+                var entry = new Adw.EntryRow ();
+                entry.title = p.label;
+                entry.text = p.default_value;
+                row.add_row (entry);
+                w.entries.insert (p.key, entry);
+            }
+
+            var command = new Adw.ActionRow ();
+            command.title = "Command";
+            command.subtitle = Markup.escape_text (ext.command);
+            command.subtitle_selectable = true;
+            command.add_css_class ("property");
+            command.add_css_class ("monospace");
+            row.add_row (command);
+
+            if (ext.hint != "") {
+                var hint = new Adw.ActionRow ();
+                hint.title = "Server Setup";
+                hint.subtitle = Markup.escape_text (ext.hint);
+                hint.subtitle_selectable = true;
+                hint.add_css_class ("property");
+                row.add_row (hint);
+            }
+
+            var source = new Adw.ActionRow ();
+            source.title = "Defined In";
+            source.subtitle = Markup.escape_text (ext.path);
+            source.subtitle_selectable = true;
+            source.add_css_class ("property");
+            row.add_row (source);
+
+            extension_widgets.add (w);
+            return row;
+        }
+
+        /* Values equal to the default are not stored, so a connection
+         * follows later changes of the default. Settings of extensions
+         * that are not installed any more are kept. */
+        private void save_extensions (Connection c) {
+            foreach (var w in extension_widgets) {
+                var old = c.extensions.lookup (w.extension.id);
+                var cfg = new ExtensionConfig ();
+                cfg.enabled = w.enabled.active;
+                cfg.dismissed = old != null && old.dismissed && !cfg.enabled;
+                foreach (var p in w.extension.params) {
+                    var v = w.entries.lookup (p.key).text.strip ();
+                    if (v != "" && v != p.default_value) {
+                        cfg.params.insert (p.key, v);
+                    }
+                }
+                if (cfg.enabled || cfg.dismissed || cfg.params.size () > 0) {
+                    c.extensions.insert (w.extension.id, cfg);
+                } else {
+                    c.extensions.remove (w.extension.id);
+                }
             }
         }
 
@@ -264,6 +407,9 @@ namespace SxPilot {
             c.jump_host = jump_row.text.strip ();
             c.remote_directory = dir_row.text.strip ();
             c.extra_options = extra_row.text.strip ();
+            c.monitor_enabled = monitor_row.active;
+            c.alerts_enabled = alerts_row.active;
+            save_extensions (c);
 
             if (c.auth_method == AuthMethod.KEY_FILE && c.identity_file == "") {
                 toasts.add_toast (new Adw.Toast ("Choose a key file or use another method"));
