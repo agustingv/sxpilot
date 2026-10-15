@@ -1,7 +1,8 @@
 /* SSH_ASKPASS helper. ssh runs it with the prompt as argv[1] and reads the
  * answer from stdout. Password prompts are answered from the keyring entry
  * of $SXPILOT_CONNECTION_ID; anything else (host key confirmation, key
- * passphrases, OTPs) is shown in a small dialog. */
+ * passphrases, OTPs) is shown in a small dialog, or refused when
+ * $SXPILOT_ASKPASS_BATCH is set. */
 
 static bool is_password_prompt (string prompt) {
     var p = prompt.down ();
@@ -29,6 +30,10 @@ int main (string[] args) {
         }
     }
 
+    /* Background sessions (monitoring) must never pop up a dialog. */
+    if (Environment.get_variable ("SXPILOT_ASKPASS_BATCH") != null) {
+        return 1;
+    }
     return run_dialog (prompt);
 }
 

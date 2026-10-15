@@ -18,6 +18,23 @@ connections can stay open at the same time.
 - Search in the sidebar, confirmation before closing live sessions
 - Light/dark terminal palette following the system style, configurable font
   and scrollback
+- Server monitoring: status dot in the sidebar and a monitor tab with CPU,
+  memory, load and disk usage (see below)
+
+## Monitoring
+
+Enable "Monitor Server" in a connection to keep a background SSH session
+that samples the server every few seconds (Preferences → Update Interval).
+"Show Monitor" in a connection's menu opens the live view, also for
+connections that are not monitored in the background.
+
+Nothing is installed on the server: SxPilot sends a small `sh` loop that
+reads `/proc` and `df`, so only Linux servers are supported. The session
+never prompts, so it needs the SSH agent, a key without passphrase or a
+password saved in the keyring. Port forwardings from the connection's extra
+options or `~/.ssh/config` are disabled for it. After an authentication or
+host key error it doesn't retry by itself, to avoid triggering fail2ban;
+when the server is unreachable it retries with increasing delays.
 
 ## Building
 

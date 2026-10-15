@@ -31,6 +31,17 @@ namespace SxPilot {
             group.add (scrollback);
 
             page.add (group);
+
+            var monitoring = new Adw.PreferencesGroup ();
+            monitoring.title = "Monitoring";
+
+            var interval = new Adw.SpinRow.with_range (2, 300, 1);
+            interval.title = "Update Interval";
+            interval.subtitle = "Seconds between samples of monitored servers";
+            settings.bind ("monitor-interval", interval, "value", SettingsBindFlags.DEFAULT);
+            monitoring.add (interval);
+
+            page.add (monitoring);
             add (page);
         }
     }

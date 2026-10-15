@@ -70,6 +70,8 @@ namespace SxPilot {
         public string jump_host { get; set; default = ""; }
         public string remote_directory { get; set; default = ""; }
         public string extra_options { get; set; default = ""; }
+        /* Keep a background SSH session collecting system metrics. */
+        public bool monitor_enabled { get; set; default = false; }
 
         public Connection () {
             Object (id: Uuid.string_random ());
@@ -99,6 +101,7 @@ namespace SxPilot {
             c.jump_host = jump_host;
             c.remote_directory = remote_directory;
             c.extra_options = extra_options;
+            c.monitor_enabled = monitor_enabled;
             return c;
         }
 
@@ -185,6 +188,35 @@ namespace SxPilot {
             return argv;
         }
 
+        /* ssh(1) running `remote_command` without a terminal and without ever
+         * prompting: a background session must fail rather than wait for
+         * input. Our options go first because ssh keeps the first value it
+         * sees for each option, so they win over the user's extra options. */
+        public string[] build_batch_argv (bool password_saved, string remote_command) throws ShellError {
+            string[] argv = { "ssh", "-T", "-a", "-x" };
+            string[] options = {
+                "ConnectTimeout=15",
+                "ServerAliveInterval=15",
+                "ServerAliveCountMax=3",
+                "ControlMaster=no",
+                "ClearAllForwardings=yes",
+                "LogLevel=ERROR",
+            };
+            if (!password_saved) {
+                options += "BatchMode=yes";
+            }
+            foreach (var o in options) {
+                argv += "-o";
+                argv += o;
+            }
+            var base_argv = build_argv (Protocol.SSH, password_saved);
+            for (int i = 1; i < base_argv.length; i++) {
+                argv += base_argv[i];
+            }
+            argv += remote_command;
+            return argv;
+        }
+
         public Json.Node to_json () {
             var b = new Json.Builder ();
             b.begin_object ();
@@ -199,6 +231,7 @@ namespace SxPilot {
             b.set_member_name ("jump_host").add_string_value (jump_host);
             b.set_member_name ("remote_directory").add_string_value (remote_directory);
             b.set_member_name ("extra_options").add_string_value (extra_options);
+            b.set_member_name ("monitor").add_boolean_value (monitor_enabled);
             b.end_object ();
             return b.get_root ();
         }
@@ -216,6 +249,7 @@ namespace SxPilot {
             c.jump_host = o.get_string_member_with_default ("jump_host", "");
             c.remote_directory = o.get_string_member_with_default ("remote_directory", "");
             c.extra_options = o.get_string_member_with_default ("extra_options", "");
+            c.monitor_enabled = o.get_boolean_member_with_default ("monitor", false);
             return c;
         }
     }

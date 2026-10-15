@@ -156,14 +156,20 @@ namespace SxPilot {
             });
             add_plain_action ("duplicate-tab", () => duplicate_tab (tab_view.selected_page));
             add_plain_action ("open-sftp-here", () => {
-                var tab = selected_tab ();
-                if (tab != null) {
-                    open_session (tab.connection, Protocol.SFTP);
+                var c = page_connection (tab_view.selected_page);
+                if (c != null) {
+                    open_session (c, Protocol.SFTP);
                 }
             });
 
             add_string_action ("connect-ssh", (id) => open_by_id (id, Protocol.SSH));
             add_string_action ("connect-sftp", (id) => open_by_id (id, Protocol.SFTP));
+            add_string_action ("show-monitor", (id) => {
+                var c = Store.get_default ().find_connection (id);
+                if (c != null) {
+                    open_monitor (c);
+                }
+            });
             add_string_action ("edit-connection", (id) => {
                 var c = Store.get_default ().find_connection (id);
                 if (c != null) {
@@ -189,25 +195,29 @@ namespace SxPilot {
             tab_actions.add_action (dup);
             var sftp = new SimpleAction ("sftp", null);
             sftp.activate.connect (() => {
-                var tab = menu_page != null ? menu_page.child as TerminalTab : null;
-                if (tab != null) {
-                    open_session (tab.connection, Protocol.SFTP);
+                var c = page_connection (menu_page);
+                if (c != null) {
+                    open_session (c, Protocol.SFTP);
                 }
             });
             tab_actions.add_action (sftp);
             var reconnect = new SimpleAction ("reconnect", null);
             reconnect.activate.connect (() => {
-                var tab = menu_page != null ? menu_page.child as TerminalTab : null;
-                if (tab != null) {
-                    tab.start ();
+                if (menu_page == null) {
+                    return;
+                }
+                if (menu_page.child is TerminalTab) {
+                    ((TerminalTab) menu_page.child).start ();
+                } else if (menu_page.child is MonitorTab) {
+                    ((MonitorTab) menu_page.child).monitor.restart ();
                 }
             });
             tab_actions.add_action (reconnect);
             var edit = new SimpleAction ("edit", null);
             edit.activate.connect (() => {
-                var tab = menu_page != null ? menu_page.child as TerminalTab : null;
-                if (tab != null && Store.get_default ().find_connection (tab.connection.id) != null) {
-                    show_connection_dialog (tab.connection, null);
+                var c = page_connection (menu_page);
+                if (c != null && Store.get_default ().find_connection (c.id) != null) {
+                    show_connection_dialog (c, null);
                 }
             });
             tab_actions.add_action (edit);
@@ -241,6 +251,19 @@ namespace SxPilot {
             return tab_view.selected_page != null ? tab_view.selected_page.child as TerminalTab : null;
         }
 
+        private static Connection? page_connection (Adw.TabPage? page) {
+            if (page == null) {
+                return null;
+            }
+            if (page.child is TerminalTab) {
+                return ((TerminalTab) page.child).connection;
+            }
+            if (page.child is MonitorTab) {
+                return ((MonitorTab) page.child).connection;
+            }
+            return null;
+        }
+
         private void open_by_id (string id, Protocol protocol) {
             var c = Store.get_default ().find_connection (id);
             if (c != null) {
@@ -272,6 +295,48 @@ namespace SxPilot {
             }
         }
 
+        /* One monitor tab per connection: focus it if already open. */
+        public void open_monitor (Connection connection) {
+            for (int i = 0; i < tab_view.n_pages; i++) {
+                var page = tab_view.get_nth_page (i);
+                var existing = page.child as MonitorTab;
+                if (existing != null && existing.connection == connection) {
+                    tab_view.selected_page = page;
+                    return;
+                }
+            }
+
+            var tab = new MonitorTab (connection);
+            var page = tab_view.append (tab);
+            tab.bind_property ("title", page, "title", BindingFlags.SYNC_CREATE);
+            page.tooltip = "%s — Monitor".printf (connection.summary);
+            page.icon = new ThemedIcon ("power-profile-performance-symbolic");
+            page.live_thumbnail = false;
+            tab.monitor.notify["state"].connect (() => update_monitor_page_state (page, tab));
+            tab.notify["title"].connect (() => {
+                if (page == tab_view.selected_page) {
+                    update_title ();
+                }
+            });
+            tab_view.selected_page = page;
+            update_monitor_page_state (page, tab);
+
+            if (split_view.collapsed) {
+                split_view.show_sidebar = false;
+            }
+        }
+
+        private void update_monitor_page_state (Adw.TabPage page, MonitorTab tab) {
+            var state = tab.monitor.state;
+            bool problem = state == MonitorState.OFFLINE || state == MonitorState.ERROR;
+            page.indicator_icon = problem ? new ThemedIcon ("network-offline-symbolic") : null;
+            page.indicator_tooltip = problem ? tab.monitor.message : "";
+            page.loading = state == MonitorState.CONNECTING;
+            if (page == tab_view.selected_page) {
+                update_title ();
+            }
+        }
+
         private void update_page_state (Adw.TabPage page, TerminalTab tab) {
             page.indicator_icon = tab.running ? null : new ThemedIcon ("network-offline-symbolic");
             page.indicator_tooltip = tab.running ? "" : "Disconnected";
@@ -297,6 +362,14 @@ namespace SxPilot {
         }
 
         private void update_title () {
+            var monitor_tab = tab_view.selected_page != null ? tab_view.selected_page.child as MonitorTab : null;
+            if (monitor_tab != null) {
+                window_title.title = monitor_tab.title;
+                window_title.subtitle = "%s · %s".printf (monitor_tab.monitor.state.to_label (),
+                                                          monitor_tab.connection.summary);
+                title = "%s — SxPilot".printf (monitor_tab.title);
+                return;
+            }
             var tab = selected_tab ();
             if (tab == null) {
                 window_title.title = "SxPilot";
@@ -319,6 +392,11 @@ namespace SxPilot {
         }
 
         private bool on_close_page (Adw.TabPage page) {
+            if (page.child is MonitorTab) {
+                ((MonitorTab) page.child).release ();
+                tab_view.close_page_finish (page, true);
+                return Gdk.EVENT_STOP;
+            }
             var tab = page.child as TerminalTab;
             if (tab == null || !tab.running) {
                 if (tab != null) {
@@ -381,9 +459,11 @@ namespace SxPilot {
 
         private void terminate_all () {
             for (int i = 0; i < tab_view.n_pages; i++) {
-                var tab = tab_view.get_nth_page (i).child as TerminalTab;
-                if (tab != null) {
-                    tab.terminate ();
+                var child = tab_view.get_nth_page (i).child;
+                if (child is TerminalTab) {
+                    ((TerminalTab) child).terminate ();
+                } else if (child is MonitorTab) {
+                    ((MonitorTab) child).release ();
                 }
             }
         }

@@ -17,6 +17,7 @@ namespace SxPilot {
         private Adw.EntryRow jump_row;
         private Adw.EntryRow dir_row;
         private Adw.EntryRow extra_row;
+        private Adw.SwitchRow monitor_row;
         private Gtk.Button save_button;
         private Adw.ToastOverlay toasts;
 
@@ -33,7 +34,7 @@ namespace SxPilot {
         construct {
             title = connection == null ? "New Connection" : "Edit Connection";
             content_width = 480;
-            content_height = 680;
+            content_height = 760;
 
             var header = new Adw.HeaderBar ();
             header.show_start_title_buttons = false;
@@ -134,6 +135,19 @@ namespace SxPilot {
 
             page.add (adv);
 
+            /* Monitoring */
+            var mon = new Adw.PreferencesGroup ();
+            mon.title = "Monitoring";
+            mon.description = "Keeps a background SSH session that reads CPU, memory and disk usage. "
+                + "Nothing is installed on the server. Linux only.";
+
+            monitor_row = new Adw.SwitchRow ();
+            monitor_row.title = "Monitor Server";
+            monitor_row.subtitle = "Needs the SSH agent, a key without passphrase or a saved password";
+            mon.add (monitor_row);
+
+            page.add (mon);
+
             toasts = new Adw.ToastOverlay ();
             toasts.child = page;
 
@@ -166,6 +180,7 @@ namespace SxPilot {
             jump_row.text = c.jump_host;
             dir_row.text = c.remote_directory;
             extra_row.text = c.extra_options;
+            monitor_row.active = c.monitor_enabled;
 
             if (c.auth_method == AuthMethod.PASSWORD) {
                 Secrets.lookup_password.begin (c.id, (obj, res) => {
@@ -264,6 +279,7 @@ namespace SxPilot {
             c.jump_host = jump_row.text.strip ();
             c.remote_directory = dir_row.text.strip ();
             c.extra_options = extra_row.text.strip ();
+            c.monitor_enabled = monitor_row.active;
 
             if (c.auth_method == AuthMethod.KEY_FILE && c.identity_file == "") {
                 toasts.add_toast (new Adw.Toast ("Choose a key file or use another method"));

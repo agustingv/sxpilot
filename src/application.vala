@@ -30,6 +30,36 @@ namespace SxPilot {
             set_accels_for_action ("win.toggle-sidebar", { "F9" });
         }
 
+        protected override void startup () {
+            base.startup ();
+
+            var css = new Gtk.CssProvider ();
+            css.load_from_string ("""
+                .status-dot {
+                    min-width: 8px;
+                    min-height: 8px;
+                    border-radius: 9999px;
+                    margin: -2px;
+                    background-color: @window_fg_color;
+                    opacity: 0.4;
+                    box-shadow: 0 0 0 2px @card_bg_color;
+                }
+                .status-dot.online { background-color: @success_color; opacity: 1; }
+                .status-dot.offline { background-color: @error_color; opacity: 1; }
+                .status-dot.error { background-color: @warning_color; opacity: 1; }
+            """);
+            Gtk.StyleContext.add_provider_for_display (Gdk.Display.get_default (), css,
+                                                       Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+            /* Start background monitors before any window lists them. */
+            MonitorManager.get_default ();
+        }
+
+        protected override void shutdown () {
+            MonitorManager.get_default ().stop_all ();
+            base.shutdown ();
+        }
+
         protected override void activate () {
             var win = active_window ?? new Window (this);
             win.present ();

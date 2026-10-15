@@ -21,5 +21,11 @@
       <default>10000</default>
       <summary>Terminal scrollback lines</summary>
     </key>
+    <key name="monitor-interval" type="i">
+      <range min="2" max="300"/>
+      <default>5</default>
+      <summary>Monitoring interval</summary>
+      <description>Seconds between two samples of a monitored server</description>
+    </key>
   </schema>
 </schemalist>
